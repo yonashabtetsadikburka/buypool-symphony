@@ -6,3 +6,6 @@ var/
 node_modules/
 .idea/
 .vscode/
+
+# Symfony committed defaults (contain only example values)
+!backend/.env
