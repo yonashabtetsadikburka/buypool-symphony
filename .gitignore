@@ -1,0 +1,8 @@
+_private/
+.env
+.env.local
+vendor/
+var/
+node_modules/
+.idea/
+.vscode/
