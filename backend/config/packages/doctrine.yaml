@@ -16,14 +16,56 @@ doctrine:
         naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
         identity_generation_preferences:
             Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
-        auto_mapping: true
+        auto_mapping: false
         mappings:
-            App:
+            Identity:
                 type: attribute
                 is_bundle: false
-                dir: '%kernel.project_dir%/src/Entity'
-                prefix: 'App\Entity'
-                alias: App
+                dir: '%kernel.project_dir%/src/Identity/Entity'
+                prefix: 'App\Identity\Entity'
+                alias: Identity
+            Supplier:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Supplier/Entity'
+                prefix: 'App\Supplier\Entity'
+                alias: Supplier
+            Campaign:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Campaign/Entity'
+                prefix: 'App\Campaign\Entity'
+                alias: Campaign
+            Participation:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Participation/Entity'
+                prefix: 'App\Participation\Entity'
+                alias: Participation
+            Payment:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Payment/Entity'
+                prefix: 'App\Payment\Entity'
+                alias: Payment
+            Delivery:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Delivery/Entity'
+                prefix: 'App\Delivery\Entity'
+                alias: Delivery
+            Proposal:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Proposal/Entity'
+                prefix: 'App\Proposal\Entity'
+                alias: Proposal
+            Notification:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Notification/Entity'
+                prefix: 'App\Notification\Entity'
+                alias: Notification
         controller_resolver:
             auto_mapping: false
 

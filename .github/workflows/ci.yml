@@ -58,5 +58,13 @@ jobs:
       - name: Static analysis
         run: composer stan
 
+      - name: Prepare test database
+        working-directory: backend
+        env:
+          APP_ENV: test
+        run: |
+          php bin/console doctrine:migrations:migrate --no-interaction
+          php bin/console doctrine:schema:validate
+
       - name: Tests
         run: composer test
