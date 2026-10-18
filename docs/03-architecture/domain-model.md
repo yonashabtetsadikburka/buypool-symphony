@@ -83,7 +83,8 @@ erDiagram
   originated from a `Proposal`.
 - **ProductImage** — gallery image with `position` and `isMain`.
 - **Campaign** — a group-buying run over a product: MOQ, current quantity, deadline, status,
-  commission rate and price tiers.
+  commission rate and price tiers. The status lifecycle is a Symfony state machine — see
+  [campaign-workflow.md](campaign-workflow.md).
 - **PriceTier** — campaign price by participant threshold; unique per `(campaign, threshold)`.
 
 ### Participation

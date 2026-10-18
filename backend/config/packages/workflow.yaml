@@ -1,2 +1,41 @@
+# Campaign lifecycle state machine. Places are the live campaign states only;
+# see docs/03-architecture/campaign-workflow.md for the rationale and guards.
 framework:
-    workflows: null
+    workflows:
+        campaign:
+            type: 'state_machine'
+            marking_store:
+                type: 'method'
+                property: 'status'
+            supports:
+                - 'App\Campaign\Entity\Campaign'
+            places:
+                - in_corso
+                - riuscita
+                - fallita
+                - ordine_pronto
+                - ordine_fornitore
+                - consegnata
+                - annullata
+            transitions:
+                reach_moq:
+                    from: [in_corso]
+                    to: riuscita
+                fail_on_deadline:
+                    from: [in_corso, riuscita]
+                    to: fallita
+                lost_moq:
+                    from: [riuscita]
+                    to: in_corso
+                allocate:
+                    from: [riuscita]
+                    to: ordine_pronto
+                send_to_supplier:
+                    from: [ordine_pronto]
+                    to: ordine_fornitore
+                deliver:
+                    from: [ordine_fornitore]
+                    to: consegnata
+                cancel:
+                    from: [in_corso, riuscita, fallita, ordine_pronto, ordine_fornitore, consegnata]
+                    to: annullata
