@@ -7,6 +7,10 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    # Acconto in % sul prezzo del primo scaglione e costo della consegna a domicilio (centesimi).
+    # Valori del legacy: acconto_percent = 20, costo_spedizione = 4,90 (da confermare).
+    app.pricing.deposit_percent: 20
+    app.pricing.home_delivery_cents: 490
 
 services:
     # default configuration for services in *this* file
@@ -18,6 +22,11 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
+
+    App\Pricing\PricingSettings:
+        arguments:
+            $depositPercent: '%app.pricing.deposit_percent%'
+            $homeDeliveryCents: '%app.pricing.home_delivery_cents%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
