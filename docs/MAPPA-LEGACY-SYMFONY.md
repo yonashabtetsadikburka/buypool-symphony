@@ -28,13 +28,13 @@ Le issue sono le US di `docs/01-analysis/user-stories.md` (milestone GitHub: MV1
 | Calcoli prezzo/saldo | `lib/prezzi.php` (131) | `Pricing\PricingCalculator` (funzioni pure, centesimi) | da fare | US-04, US-07 |
 | Ripartizione quantità | `lib/ripartizione.php` (47) | `Campaign\Application\AllocationService` | da fare | US-11 |
 | Regole gruppi | `lib/gruppi_regole.php` (54) | validator + `CampaignGuards` | parziale | US-10 |
-| Registrazione, login, sessione | `endpoints/auth.php` (100), `lib/auth.php` (141) | `Security` (json_login, voter), `AuthController` | da fare | US-02, US-03 |
-| Google OAuth | `lib/oauth.php` (503), `endpoints/oauth.php` | `Identity\Service\GoogleTokenVerifier` + `ExternalIdentity` | da fare | US-03 |
+| Registrazione, login, sessione | `endpoints/auth.php` (100), `lib/auth.php` (141) | `Security` (json_login), `Identity\Controller\AuthController`, `RegistrationService` | fatto (b2b incluso; sospensione di sessione già aperta: no) | US-02, US-03 |
+| Google OAuth | `lib/oauth.php` (503), `endpoints/oauth.php` | `POST /api/auth/google` (token dal client, non redirect): `Identity\Google\TokenInfoGoogleIdTokenVerifier`, `GoogleLoginService`, `ExternalIdentity` | fatto | US-03 |
 | Microsoft OAuth | `lib/oauth.php` | idem, verifica token | da fare | US-24 |
 | Reset password | `endpoints/password.php` (157) | `PasswordResetToken` + Messenger/Mailer | da fare | US-17 |
 | Profilo | `endpoints/profilo.php` (184) | `ProfileController` | da fare | US-22 |
 | Export dati / cancellazione account | `endpoints/utenti.php` (266) | `PrivacyController` | da fare | US-15, US-16 |
-| Lista e dettaglio gruppi | `endpoints/campagne.php` (1763, parte lettura) | `CampaignController` (pubblico) | da fare | US-01 |
+| Lista e dettaglio gruppi | `endpoints/campagne.php` (1763, parte lettura) | `Campaign\Controller\CampaignController` (`GET /api/campaigns`, `/api/campaigns/{id}`), `CampaignPresenter`, `CampaignDisplayStatus`; importi in centesimi, sola lettura | fatto | US-01 |
 | CRUD gruppi admin | `endpoints/admin_gruppi.php` (437) | `Admin\CampaignAdminController` | da fare | US-10 |
 | Catalogo e prodotti | `catalogo.php`, `prodotti.php` | `CatalogController` | da fare | US-21 |
 | Adesione con acconto | `endpoints/partecipazioni.php` (142), `pagamento.php` (1409) | `Participation\JoinService`, `PaymentController` | da fare | US-04 |

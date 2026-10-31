@@ -4,6 +4,7 @@ namespace App\Identity\Controller;
 
 use App\Identity\Entity\User;
 use App\Identity\Security\JsonSecurityHandler;
+use App\Identity\Service\GoogleLoginService;
 use App\Identity\Service\RegistrationService;
 use App\Shared\Http\ApiResponse;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -27,6 +28,17 @@ final class AuthController
         $security->login($user, 'security.authenticator.json_login.main', 'main');
 
         return ApiResponse::ok(JsonSecurityHandler::describe($user), 201);
+    }
+
+    /** Accesso con Google: il client invia l'idToken ricevuto da Google (e, al primo accesso, privacy e tipo di cliente). */
+    #[Route('/api/auth/google', name: 'api_auth_google', methods: ['POST'])]
+    public function google(Request $request, GoogleLoginService $google, Security $security): JsonResponse
+    {
+        $user = $google->login(ApiResponse::body($request));
+
+        $security->login($user, 'security.authenticator.json_login.main', 'main');
+
+        return ApiResponse::ok(JsonSecurityHandler::describe($user));
     }
 
     #[Route('/api/auth/me', name: 'api_auth_me', methods: ['GET'])]

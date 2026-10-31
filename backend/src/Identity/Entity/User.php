@@ -66,6 +66,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 16, nullable: true)]
     private ?string $fiscalCode = null;
 
+    #[ORM\Column(length: 190, nullable: true)]
+    private ?string $companyName = null;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -282,6 +285,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setFiscalCode(?string $fiscalCode): self
     {
         $this->fiscalCode = $fiscalCode;
+
+        return $this;
+    }
+
+    public function getCompanyName(): ?string
+    {
+        return $this->companyName;
+    }
+
+    public function setCompanyName(?string $companyName): self
+    {
+        $this->companyName = $companyName;
 
         return $this;
     }

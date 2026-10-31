@@ -37,3 +37,7 @@ when@test:
         App\Campaign\Application\CampaignTransitioner:
             autowire: true
             public: true
+
+        # Google login without calling Google
+        App\Tests\Support\FakeGoogleIdTokenVerifier: ~
+        App\Identity\Google\GoogleIdTokenVerifier: '@App\Tests\Support\FakeGoogleIdTokenVerifier'

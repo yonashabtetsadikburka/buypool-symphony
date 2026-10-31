@@ -21,7 +21,19 @@ Diario del percorso di riscrittura di BuyPool in Symfony, in ordine cronologico.
 - Correzione di sicurezza rispetto al legacy: limite ai tentativi di login (5 ogni 15 minuti). L'account sospeso riceve 403 solo dopo aver indovinato la password.
 - Non fatto in questo blocco: login con Google (vedi sotto), clienti b2b (ragione sociale e partita IVA: manca la colonna `companyName`), chiusura della sessione di un utente sospeso già collegato (US-19), token CSRF (il legacy aveva `X-CSRF-Token`).
 - Scoperta: il legacy non verifica un token inviato dal client. Usa il flusso a redirect (`/auth/google/start` e `/callback`, con scambio del codice e verifica della firma tramite JWKS), mentre la US-03 e FR-04 parlano di "Google identity token". Da decidere prima di scrivere il login con Google.
-- Decisioni: tutto in centesimi interi; arrotondamento "half up" in aritmetica intera al posto dei float del legacy; percentuale acconto e costo consegna a domicilio sono parametri (`app.pricing.*`), 20 e 490 centesimi (4,90 € dal `config.php` legacy, da confermare).
-- Verifica: un test confronta 20.000 casi casuali con la formula float del legacy (`saldo_dettaglio`) e i valori coincidono al centesimo.
-- Differenza voluta: nel ripartitore i resti si confrontano con interi esatti, non con float, così a parità vince davvero l'adesione più vecchia.
-- Non portati: aumento prezzo, `costo_buypool`, barra di avanzamento (non servono alle US).
+
+## 2026-10-31 · Accesso con Google e clienti b2b (US-03, US-02)
+- Aggiunto `POST /api/auth/google`: il client invia l'`idToken` ricevuto da Google (scelta B, come dice la US-03). Il token è verificato interrogando l'endpoint `tokeninfo` di Google (firma) e controllando audience (`GOOGLE_CLIENT_ID`), emittente e scadenza. Senza `GOOGLE_CLIENT_ID` il login risponde 503.
+- Regole prese dal legacy (`oauth_risolvi` e `oauth_completa`): identità già collegata → accede; stessa email di un account esistente → collega solo se Google garantisce l'email; nessun account → lo crea come cliente solo con il consenso privacy (`PRIVACY_NON_ACCETTATA` altrimenti), con tipo privato o b2b. Account sospeso → 403.
+- Differenza dal legacy: il flusso a redirect e il passaggio "collega con password" per email non verificate non ci sono; l'email non verificata riceve 403 `EMAIL_NON_VERIFICATA`. Nessuna dipendenza Composer nuova (HttpClient già presente, nessuna libreria JWT).
+- Clienti b2b: nuova colonna `users.company_name` (migrazione `Version20261031100000`, da lanciare anche sul DB di sviluppo), ragione sociale obbligatoria (max 190) e partita IVA italiana validata con cifra di controllo (porta di `piva_normalizza`). Vale per registrazione e primo accesso con Google; per i privati non si salva nulla.
+- Resta fuori: l'accesso del fornitore invitato con Google (US-12), Microsoft (US-24).
+
+## 2026-10-31 · Elenco e dettaglio pubblici dei gruppi (US-01)
+- Aggiunti `GET /api/campaigns` (ordinato per scadenza) e `GET /api/campaigns/{id}`, pubblici. Il dettaglio mostra scaglioni per soglia crescente, immagini (principale per prima), fornitore, costo della consegna a domicilio (490 centesimi); un id sconosciuto o malformato dà 404 (`CAMPAGNA_INESISTENTE` per un UUID valido).
+- Decisioni: campi con i nomi del legacy (`quantita_minima`, `quantita_attuale`, `data_limite`, `stato_campagna`, `scaglioni`…), ma importi in centesimi (`prezzo_corrente_cents`, `prezzo_cents`) invece che in euro con decimali: il client deve dividere per 100. Gli id sono UUID, non interi.
+- Differenza dal legacy: in lettura non si scrive nulla. Il legacy ricalcolava e salvava lo stato del gruppo a ogni GET (`ricalcola_stato`); qui `stato_campagna` (in_corso, in_chiusura, conclusa, non_riuscita) si deriva in memoria con `CampaignDisplayStatus` e le transizioni restano a workflow e chiusura (US-11). Un test verifica che le GET non modifichino lo stato.
+- Privacy: ospiti e clienti vedono solo il numero di partecipanti (clienti distinti con adesione attiva, escluse annullate e rimborsate: il legacy contava anche quelle), mai nomi o email.
+- Query: prodotto, fornitore, categoria e punto di ritiro in una query; scaglioni, immagini e conteggi in una query ciascuno, senza N+1. Senza punto di ritiro proprio vale la sede predefinita (la prima creata).
+- Non incluso: valutazioni del fornitore e del gruppo (US-18), `mia_partecipazione` (US-04/US-21), bozze (non esistono tra gli stati), banner ospite (frontend).
+- Problema: con più entità Uuid nelle clausole `IN` Doctrine non trovava righe; si usano gli id binari con `IDENTITY()`.

@@ -45,13 +45,15 @@ final class RegistrationService
             throw new ApiError('PRIVACY_NON_ACCETTATA', "Devi accettare l'informativa privacy per registrarti");
         }
 
+        $user = (new User($firstName, $email))
+            ->setLastName($lastName)
+            ->setPrivacyConsentedAt(new \DateTimeImmutable());
+        CustomerTypeApplier::apply($user, $data);
+
         if (null !== $this->users->findOneByEmail($email)) {
             throw self::duplicateEmail();
         }
 
-        $user = (new User($firstName, $email))
-            ->setLastName($lastName)
-            ->setPrivacyConsentedAt(new \DateTimeImmutable());
         $user->setHashedPassword($this->hasher->hashPassword($user, $password));
 
         try {
