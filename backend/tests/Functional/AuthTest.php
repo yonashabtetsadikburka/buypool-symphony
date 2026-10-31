@@ -50,6 +50,40 @@ final class AuthTest extends WebTestCase
         self::assertResponseStatusCodeSame(200);
     }
 
+    public function testBusinessRegistrationStoresCompanyNameAndNormalizedVatNumber(): void
+    {
+        $this->post('/api/auth/register', $this->payload('azienda') + ['tipo' => 'b2b', 'ragione_sociale' => 'Rossi Srl', 'partita_iva' => 'IT 12345678903']);
+
+        self::assertResponseStatusCodeSame(201);
+        $user = $this->findUser('azienda');
+        self::assertSame('b2b', $user->getCustomerType()->value);
+        self::assertSame('Rossi Srl', $user->getCompanyName());
+        self::assertSame('12345678903', $user->getVatNumber());
+    }
+
+    public function testBusinessRegistrationRequiresCompanyNameAndValidVatNumber(): void
+    {
+        $this->post('/api/auth/register', $this->payload('b2bx') + ['tipo' => 'b2b', 'partita_iva' => '12345678903']);
+        self::assertResponseStatusCodeSame(400);
+        self::assertSame('RAGIONE_SOCIALE_MANCANTE', $this->json()['errore']['codice']);
+
+        $this->post('/api/auth/register', $this->payload('b2bx') + ['tipo' => 'b2b', 'ragione_sociale' => 'Rossi Srl', 'partita_iva' => '12345678900']);
+        self::assertResponseStatusCodeSame(400);
+        self::assertSame('PIVA_NON_VALIDA', $this->json()['errore']['codice']);
+        self::assertNull($this->findUser('b2bx'));
+    }
+
+    public function testPrivateRegistrationIgnoresBusinessFields(): void
+    {
+        $this->post('/api/auth/register', $this->payload('privato') + ['ragione_sociale' => 'Ignorata', 'partita_iva' => '12345678903']);
+
+        self::assertResponseStatusCodeSame(201);
+        $user = $this->findUser('privato');
+        self::assertSame('privato', $user->getCustomerType()->value);
+        self::assertNull($user->getCompanyName());
+        self::assertNull($user->getVatNumber());
+    }
+
     public function testMissingPrivacyReturns400(): void
     {
         $this->post('/api/auth/register', ['privacy' => false] + $this->payload('privacy'));
