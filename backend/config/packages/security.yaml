@@ -41,7 +41,7 @@ security:
 
     # Note: Only the *first* matching rule is applied
     access_control:
-        - { path: ^/api/auth/(login|register)$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/(login|register|google)$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/logout$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/me$, roles: IS_AUTHENTICATED_FULLY }
 
