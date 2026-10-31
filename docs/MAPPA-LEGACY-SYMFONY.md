@@ -28,7 +28,7 @@ Le issue sono le US di `docs/01-analysis/user-stories.md` (milestone GitHub: MV1
 | Calcoli prezzo/saldo | `lib/prezzi.php` (131) | `Pricing\PricingCalculator` (funzioni pure, centesimi) | da fare | US-04, US-07 |
 | Ripartizione quantità | `lib/ripartizione.php` (47) | `Campaign\Application\AllocationService` | da fare | US-11 |
 | Regole gruppi | `lib/gruppi_regole.php` (54) | validator + `CampaignGuards` | parziale | US-10 |
-| Registrazione, login, sessione | `endpoints/auth.php` (100), `lib/auth.php` (141) | `Security` (json_login, voter), `AuthController` | da fare | US-02, US-03 |
+| Registrazione, login, sessione | `endpoints/auth.php` (100), `lib/auth.php` (141) | `Security` (json_login), `IdentityControllerAuthController`, `RegistrationService` | fatto (b2b e sospensione sessione: no) | US-02, US-03 |
 | Google OAuth | `lib/oauth.php` (503), `endpoints/oauth.php` | `Identity\Service\GoogleTokenVerifier` + `ExternalIdentity` | da fare | US-03 |
 | Microsoft OAuth | `lib/oauth.php` | idem, verifica token | da fare | US-24 |
 | Reset password | `endpoints/password.php` (157) | `PasswordResetToken` + Messenger/Mailer | da fare | US-17 |
@@ -58,4 +58,7 @@ Le issue sono le US di `docs/01-analysis/user-stories.md` (milestone GitHub: MV1
 | `dev.php`, `.env`, `config.php` | – | – | non serve | – |
 
 ## Valori di configurazione ereditati dal legacy
-`acconto_percent` 20 · minimo checkout 0,50 € · `saldo_termine_ore` 48 · `saldo_promemoria_ore` 24 · `costo_spedizione` 4,90 (config) / `costo_spedizione_cents` 0 (impostazioni: i due valori sono incoerenti, vedi piano) · `ritiro_giorni_max` 10 · `fornitore_conferma_ore` 72.
+`acconto_percent` 20 · minimo checkout 0,50 € · `saldo_termine_ore` 48 · `saldo_promemoria_ore` 24 · `costo_spedizione` 4,90 (confermato, parametro `app.pricing.home_delivery_cents` = 490) · `ritiro_giorni_max` 10 · `fornitore_conferma_ore` 72.
+
+## Contratto API ereditato dal legacy
+Risposte `{ "ok": true, "dati": … }` e `{ "ok": false, "errore": { "codice", "messaggio", "campi"? } }` (classi `Shared\Http\ApiResponse` e `ApiError`). Nomi dei campi e codici errore restano quelli del legacy (italiano: `nome`, `cognome`, `ruolo`, `stato`, `CREDENZIALI_NON_VALIDE`…).
