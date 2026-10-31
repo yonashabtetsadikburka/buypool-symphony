@@ -28,7 +28,7 @@ Le issue sono le US di `docs/01-analysis/user-stories.md` (milestone GitHub: MV1
 | Calcoli prezzo/saldo | `lib/prezzi.php` (131) | `Pricing\PricingCalculator` (funzioni pure, centesimi) | da fare | US-04, US-07 |
 | Ripartizione quantità | `lib/ripartizione.php` (47) | `Campaign\Application\AllocationService` | da fare | US-11 |
 | Regole gruppi | `lib/gruppi_regole.php` (54) | validator + `CampaignGuards` | parziale | US-10 |
-| Registrazione, login, sessione | `endpoints/auth.php` (100), `lib/auth.php` (141) | `Security` (json_login), `IdentityControllerAuthController`, `RegistrationService` | fatto (b2b e sospensione sessione: no) | US-02, US-03 |
+| Registrazione, login, sessione | `endpoints/auth.php` (100), `lib/auth.php` (141) | `Security` (json_login, voter), `AuthController` | da fare | US-02, US-03 |
 | Google OAuth | `lib/oauth.php` (503), `endpoints/oauth.php` | `Identity\Service\GoogleTokenVerifier` + `ExternalIdentity` | da fare | US-03 |
 | Microsoft OAuth | `lib/oauth.php` | idem, verifica token | da fare | US-24 |
 | Reset password | `endpoints/password.php` (157) | `PasswordResetToken` + Messenger/Mailer | da fare | US-17 |
