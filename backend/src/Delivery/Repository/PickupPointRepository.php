@@ -17,6 +17,15 @@ class PickupPointRepository extends ServiceEntityRepository
     }
 
     /**
+     * Sede predefinita: la prima creata. Vale per i gruppi senza punto di ritiro proprio
+     * (nel legacy, la sede con l'id più basso). Gli id sono UUID v7, quindi ordinati per creazione.
+     */
+    public function findDefault(): ?PickupPoint
+    {
+        return $this->findOneBy([], ['id' => 'ASC']);
+    }
+
+    /**
      * @return PickupPoint[]
      */
     public function findAllOrderedByCity(): array

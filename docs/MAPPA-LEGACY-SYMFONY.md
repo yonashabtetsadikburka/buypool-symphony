@@ -34,7 +34,7 @@ Le issue sono le US di `docs/01-analysis/user-stories.md` (milestone GitHub: MV1
 | Reset password | `endpoints/password.php` (157) | `PasswordResetToken` + Messenger/Mailer | da fare | US-17 |
 | Profilo | `endpoints/profilo.php` (184) | `ProfileController` | da fare | US-22 |
 | Export dati / cancellazione account | `endpoints/utenti.php` (266) | `PrivacyController` | da fare | US-15, US-16 |
-| Lista e dettaglio gruppi | `endpoints/campagne.php` (1763, parte lettura) | `CampaignController` (pubblico) | da fare | US-01 |
+| Lista e dettaglio gruppi | `endpoints/campagne.php` (1763, parte lettura) | `Campaign\Controller\CampaignController` (`GET /api/campaigns`, `/api/campaigns/{id}`), `CampaignPresenter`, `CampaignDisplayStatus`; importi in centesimi, sola lettura | fatto | US-01 |
 | CRUD gruppi admin | `endpoints/admin_gruppi.php` (437) | `Admin\CampaignAdminController` | da fare | US-10 |
 | Catalogo e prodotti | `catalogo.php`, `prodotti.php` | `CatalogController` | da fare | US-21 |
 | Adesione con acconto | `endpoints/partecipazioni.php` (142), `pagamento.php` (1409) | `Participation\JoinService`, `PaymentController` | da fare | US-04 |

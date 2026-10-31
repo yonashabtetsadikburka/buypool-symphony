@@ -28,3 +28,12 @@ Diario del percorso di riscrittura di BuyPool in Symfony, in ordine cronologico.
 - Differenza dal legacy: il flusso a redirect e il passaggio "collega con password" per email non verificate non ci sono; l'email non verificata riceve 403 `EMAIL_NON_VERIFICATA`. Nessuna dipendenza Composer nuova (HttpClient già presente, nessuna libreria JWT).
 - Clienti b2b: nuova colonna `users.company_name` (migrazione `Version20261031100000`, da lanciare anche sul DB di sviluppo), ragione sociale obbligatoria (max 190) e partita IVA italiana validata con cifra di controllo (porta di `piva_normalizza`). Vale per registrazione e primo accesso con Google; per i privati non si salva nulla.
 - Resta fuori: l'accesso del fornitore invitato con Google (US-12), Microsoft (US-24).
+
+## 2026-10-31 · Elenco e dettaglio pubblici dei gruppi (US-01)
+- Aggiunti `GET /api/campaigns` (ordinato per scadenza) e `GET /api/campaigns/{id}`, pubblici. Il dettaglio mostra scaglioni per soglia crescente, immagini (principale per prima), fornitore, costo della consegna a domicilio (490 centesimi); un id sconosciuto o malformato dà 404 (`CAMPAGNA_INESISTENTE` per un UUID valido).
+- Decisioni: campi con i nomi del legacy (`quantita_minima`, `quantita_attuale`, `data_limite`, `stato_campagna`, `scaglioni`…), ma importi in centesimi (`prezzo_corrente_cents`, `prezzo_cents`) invece che in euro con decimali: il client deve dividere per 100. Gli id sono UUID, non interi.
+- Differenza dal legacy: in lettura non si scrive nulla. Il legacy ricalcolava e salvava lo stato del gruppo a ogni GET (`ricalcola_stato`); qui `stato_campagna` (in_corso, in_chiusura, conclusa, non_riuscita) si deriva in memoria con `CampaignDisplayStatus` e le transizioni restano a workflow e chiusura (US-11). Un test verifica che le GET non modifichino lo stato.
+- Privacy: ospiti e clienti vedono solo il numero di partecipanti (clienti distinti con adesione attiva, escluse annullate e rimborsate: il legacy contava anche quelle), mai nomi o email.
+- Query: prodotto, fornitore, categoria e punto di ritiro in una query; scaglioni, immagini e conteggi in una query ciascuno, senza N+1. Senza punto di ritiro proprio vale la sede predefinita (la prima creata).
+- Non incluso: valutazioni del fornitore e del gruppo (US-18), `mia_partecipazione` (US-04/US-21), bozze (non esistono tra gli stati), banner ospite (frontend).
+- Problema: con più entità Uuid nelle clausole `IN` Doctrine non trovava righe; si usano gli id binari con `IDENTITY()`.
