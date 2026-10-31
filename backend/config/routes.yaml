@@ -9,3 +9,12 @@
 
 controllers:
     resource: routing.controllers
+
+# Intercettate dal firewall (json_login e logout): servono solo a dare un nome al percorso.
+api_auth_login:
+    path: /api/auth/login
+    methods: [POST]
+
+api_auth_logout:
+    path: /api/auth/logout
+    methods: [POST]

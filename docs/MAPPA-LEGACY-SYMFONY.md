@@ -58,4 +58,7 @@ Le issue sono le US di `docs/01-analysis/user-stories.md` (milestone GitHub: MV1
 | `dev.php`, `.env`, `config.php` | – | – | non serve | – |
 
 ## Valori di configurazione ereditati dal legacy
-`acconto_percent` 20 · minimo checkout 0,50 € · `saldo_termine_ore` 48 · `saldo_promemoria_ore` 24 · `costo_spedizione` 4,90 (config) / `costo_spedizione_cents` 0 (impostazioni: i due valori sono incoerenti, vedi piano) · `ritiro_giorni_max` 10 · `fornitore_conferma_ore` 72.
+`acconto_percent` 20 · minimo checkout 0,50 € · `saldo_termine_ore` 48 · `saldo_promemoria_ore` 24 · `costo_spedizione` 4,90 (confermato, parametro `app.pricing.home_delivery_cents` = 490) · `ritiro_giorni_max` 10 · `fornitore_conferma_ore` 72.
+
+## Contratto API ereditato dal legacy
+Risposte `{ "ok": true, "dati": … }` e `{ "ok": false, "errore": { "codice", "messaggio", "campi"? } }` (classi `Shared\Http\ApiResponse` e `ApiError`). Nomi dei campi e codici errore restano quelli del legacy (italiano: `nome`, `cognome`, `ruolo`, `stato`, `CREDENZIALI_NON_VALIDE`…).
