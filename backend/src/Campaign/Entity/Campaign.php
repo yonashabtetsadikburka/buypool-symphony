@@ -154,6 +154,17 @@ class Campaign
         return $this->moq;
     }
 
+    public function setMoq(int $moq): self
+    {
+        if ($moq < 1) {
+            throw new \InvalidArgumentException('MOQ must be at least 1.');
+        }
+
+        $this->moq = $moq;
+
+        return $this;
+    }
+
     public function getCurrentQuantity(): int
     {
         return $this->currentQuantity;
@@ -214,6 +225,17 @@ class Campaign
     public function getBasePriceCents(): int
     {
         return $this->basePriceCents;
+    }
+
+    public function setBasePriceCents(int $basePriceCents): self
+    {
+        if ($basePriceCents < 0) {
+            throw new \InvalidArgumentException('Price cannot be negative.');
+        }
+
+        $this->basePriceCents = $basePriceCents;
+
+        return $this;
     }
 
     public function getCurrentPriceCents(): int
@@ -293,6 +315,13 @@ class Campaign
         if (!$this->priceTiers->contains($priceTier)) {
             $this->priceTiers->add($priceTier);
         }
+
+        return $this;
+    }
+
+    public function removePriceTier(PriceTier $priceTier): self
+    {
+        $this->priceTiers->removeElement($priceTier);
 
         return $this;
     }
