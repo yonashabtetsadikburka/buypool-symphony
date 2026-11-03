@@ -7,6 +7,7 @@ use App\Campaign\Entity\PriceTier;
 use App\Campaign\Entity\ProductImage;
 use App\Campaign\Enum\CampaignStatus;
 use App\Participation\Entity\Participation;
+use App\Payment\Entity\Payment;
 use App\Participation\Enum\ParticipationStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use App\Supplier\Entity\Supplier;
@@ -151,6 +152,33 @@ class CampaignRepository extends ServiceEntityRepository
         }
 
         return $counts;
+    }
+
+    /** Adesioni "vive" del gruppo: tutte tranne annullate e rimborsate. */
+    public function countLiveParticipations(Campaign $campaign): int
+    {
+        return (int) $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(p.id)')
+            ->from(Participation::class, 'p')
+            ->where('p.campaign = :campaign')
+            ->andWhere('p.status NOT IN (:inactive)')
+            ->setParameter('campaign', $campaign->getId(), 'uuid')
+            ->setParameter('inactive', [ParticipationStatus::Annullata, ParticipationStatus::Rimborsata])
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /** Pagamenti registrati sul gruppo, in qualunque stato. */
+    public function countPayments(Campaign $campaign): int
+    {
+        return (int) $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(pg.id)')
+            ->from(Payment::class, 'pg')
+            ->join('pg.participation', 'p')
+            ->where('p.campaign = :campaign')
+            ->setParameter('campaign', $campaign->getId(), 'uuid')
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     /** Gruppi (di qualunque stato) di un fornitore. */

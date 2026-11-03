@@ -44,6 +44,8 @@ security:
         - { path: ^/api/auth/(login|register|google)$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/logout$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/me$, roles: IS_AUTHENTICATED_FULLY }
+        # Elenco e dettaglio dei gruppi sono pubblici (GET); creare, modificare ed eliminare è solo dell'admin.
+        - { path: ^/api/campaigns, methods: [POST, PATCH, PUT, DELETE], roles: ROLE_ADMIN }
 
 when@test:
     security:
