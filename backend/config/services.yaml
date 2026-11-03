@@ -28,6 +28,9 @@ services:
             $depositPercent: '%app.pricing.deposit_percent%'
             $homeDeliveryCents: '%app.pricing.home_delivery_cents%'
 
+    # Stripe: in produzione il gateway vero (HttpClient, chiave in STRIPE_SECRET_KEY); nei test un finto.
+    App\Payment\Gateway\StripeGateway: '@App\Payment\Gateway\HttpStripeGateway'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
@@ -38,6 +41,16 @@ when@test:
             autowire: true
             public: true
 
+        # chiamato dal webhook di Stripe (US-07); fino ad allora lo leggono direttamente i test
+        App\Participation\Service\DepositConfirmationService:
+            autowire: true
+            public: true
+
         # Google login without calling Google
         App\Tests\Support\FakeGoogleIdTokenVerifier: ~
         App\Identity\Google\GoogleIdTokenVerifier: '@App\Tests\Support\FakeGoogleIdTokenVerifier'
+
+        # Stripe senza chiamare Stripe (pubblico: i test ne leggono le chiamate registrate)
+        App\Tests\Support\FakeStripeGateway:
+            public: true
+        App\Payment\Gateway\StripeGateway: '@App\Tests\Support\FakeStripeGateway'

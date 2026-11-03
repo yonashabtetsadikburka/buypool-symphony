@@ -1,0 +1,15 @@
+# BuyPool frontend — policy cache:
+# - HTML e JS/CSS: sempre rivalidati (mai shell o codice vecchi in cache;
+#   304 se invariati, quindi nessun costo di banda aggiuntivo)
+# - immagini/font: cache lunga, cambiano raramente
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+</IfModule>
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|htm|css|js)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "\.(png|jpg|jpeg|webp|svg|ico|woff2?)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+</IfModule>

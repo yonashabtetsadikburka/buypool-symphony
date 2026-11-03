@@ -44,8 +44,12 @@ security:
         - { path: ^/api/auth/(login|register|google)$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/logout$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/me$, roles: IS_AUTHENTICATED_FULLY }
+        # Adesione diretta senza pagamento: disabilitata (410) per chiunque, anche ospiti.
+        - { path: ^/api/campaigns/[^/]+/join$, roles: PUBLIC_ACCESS }
         # Elenco e dettaglio dei gruppi sono pubblici (GET); creare, modificare ed eliminare è solo dell'admin.
-        - { path: ^/api/campaigns, methods: [POST, PATCH, PUT, DELETE], roles: ROLE_ADMIN }
+        - { path: ^/api/campaigns(/[^/]+)?$, methods: [POST, PATCH, PUT, DELETE], roles: ROLE_ADMIN }
+        # Pagamenti: serve un utente collegato (l'account sospeso è già bloccato dal UserChecker).
+        - { path: ^/api/payments, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
     security:

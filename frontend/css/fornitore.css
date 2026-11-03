@@ -1,0 +1,93 @@
+/* Area fornitore: Panoramica e schede dei gruppi. Riusa le classi adm-* (card, "Da fare", numeri, chip) per avere lo stesso aspetto dell'area admin. */
+.frn-sezione-testa { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+.frn-sezione-testa .adm-h2 { margin: 0; }
+.frn-link { font-size: 14px; font-weight: 700; color: #0262BB; text-decoration: none; white-space: nowrap; }
+.frn-link:hover { text-decoration: underline; }
+.frn-link:focus-visible { outline: 3px solid #0273DD; outline-offset: 2px; }
+.frn-gruppi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.frn-gruppo { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 18px 20px; border: 1px solid #E3E8F0; border-radius: 16px; background: #fff; }
+.frn-gruppo-testa { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.frn-gruppo-titolo { margin: 0; font-size: 18px; font-weight: 700; line-height: 1.3; color: #0F1B33; overflow-wrap: anywhere; }
+.frn-gruppo-pezzi { margin: 0; font-size: 14px; font-weight: 500; color: #3B4A63; }
+.frn-gruppo-scadenza { margin: 0; font-size: 14px; font-weight: 500; color: #5B6B82; }
+.frn-barra { width: 100%; }
+.adm-dafare-testo strong { display: block; font-weight: 700; }
+@media (max-width: 1000px) { .frn-gruppi { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .frn-gruppi { grid-template-columns: 1fr; } }
+
+/* Gruppi: elenco e dettaglio (sola lettura) */
+.frn-titolo-link { color: inherit; text-decoration: none; }
+.frn-titolo-link:hover { text-decoration: underline; }
+.frn-titolo-link:focus-visible { outline: 3px solid #0273DD; outline-offset: 2px; border-radius: 4px; }
+.frn-testa { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 0; }
+.frn-testa .adm-barra { max-width: 320px; }
+.frn-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; font-size: 15px; font-weight: 500; color: #3B4A63; }
+.frn-consegna { margin: 0; font-size: 15px; font-weight: 500; color: #3B4A63; overflow-wrap: anywhere; }
+.frn-tre { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 720px) { .frn-tre { grid-template-columns: 1fr; } }
+
+/* Proposte: elenco, dettaglio e modulo guidato in 3 passi */
+.adm-chip-viola { background: #EDE7FA; color: #4B2E9F; }
+.frn-prop-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.frn-prop { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 14px 18px; background: #fff; border: 1px solid #E3E8F0; border-radius: 16px; }
+.frn-prop-suggerita { grid-template-columns: 72px minmax(0, 1fr); background: #F6F8FB; }
+.frn-thumb { width: 72px; height: 72px; border-radius: 12px; object-fit: cover; background: #F2F5F9; display: block; }
+.frn-thumb-vuota { display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; color: #5B6B82; }
+.frn-prop-corpo { min-width: 0; }
+.frn-prop-testa { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.frn-prop-titolo { font-size: 18px; font-weight: 700; color: #0F1B33; overflow-wrap: anywhere; }
+.frn-prop-sub { margin: 4px 0 0; font-size: 14px; font-weight: 500; color: #3B4A63; }
+.frn-prop-corpo .adm-avviso { margin: 10px 0 0; }
+.frn-prop-azioni { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.frn-azioni-fondo { display: flex; gap: 10px; flex-wrap: wrap; }
+.frn-prop-scheda { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: start; }
+.frn-prop-scheda:not(:has(img)) { grid-template-columns: 1fr; }
+.frn-foto-grande { width: 200px; height: 200px; object-fit: cover; border-radius: 12px; background: #F2F5F9; }
+.frn-descrizione { margin: 0 0 12px; font-size: 15px; font-weight: 400; color: #0F1B33; white-space: pre-line; overflow-wrap: anywhere; }
+.adm-avviso-rosso { background: #FDE8E8; color: #8A1C1C; }
+.frn-passi { margin-bottom: 4px; }
+.frn-passi-barra { height: 8px; border-radius: 4px; background: #D4DEEC; overflow: hidden; }
+.frn-passi-barra > span { display: block; height: 100%; background: #0262BB; border-radius: 4px; transition: width .2s; }
+.frn-passi-lista { list-style: none; margin: 10px 0 0; padding: 0; display: flex; gap: 8px 24px; flex-wrap: wrap; font-size: 14px; font-weight: 700; color: #5B6B82; }
+.frn-passi-lista .attivo { color: #0262BB; }
+.frn-passi-lista .fatto { color: #0B5B2A; }
+.frn-passo-n { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #EEF1F6; font-size: 13px; }
+.frn-passi-lista .attivo .frn-passo-n { background: #0262BB; color: #fff; }
+.frn-passi-lista .fatto .frn-passo-n { background: #E4F5EA; color: #0B5B2A; }
+.frn-form { display: flex; flex-direction: column; gap: 16px; }
+.frn-form .adm-h2 { margin: 0; }
+.frn-due-colonne { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.frn-sottotitolo { margin: 8px 0 0; font-size: 18px; font-weight: 700; color: #0F1B33; }
+.frn-tab-scaglioni input { width: 100%; min-width: 84px; box-sizing: border-box; min-height: 44px; padding: 8px 12px; border: 1.5px solid #D7DEE8; border-radius: 10px; font: inherit; font-size: 15px; font-weight: 500; color: #0F1B33; background: #fff; }
+.frn-tab-scaglioni input[readonly] { background: #F6F8FB; color: #5B6B82; }
+.frn-tab-scaglioni input:focus { outline: 3px solid #C9DFFA; border-color: #0262BB; }
+.frn-errore { display: block; min-height: 0; font-size: 13px; font-weight: 600; color: #8A1C1C; }
+.frn-errore:empty { display: none; }
+.frn-riga-err td { padding-top: 0; }
+.frn-anteprima img { max-width: 240px; max-height: 240px; border-radius: 12px; margin-top: 10px; display: block; object-fit: cover; }
+.frn-form-azioni { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+.frn-riepilogo { margin: 0; }
+.frn-richiesta { display: flex; flex-direction: column; gap: 12px; }
+.frn-richiesta .adm-h2 { margin: 0; }
+@media (max-width: 720px) {
+  .frn-prop { grid-template-columns: 56px minmax(0, 1fr); }
+  .frn-thumb { width: 56px; height: 56px; }
+  .frn-prop-azioni { grid-column: 1 / -1; justify-content: flex-start; }
+  .frn-due-colonne { grid-template-columns: 1fr; }
+  .frn-prop-scheda { grid-template-columns: 1fr; }
+  .frn-foto-grande { width: 100%; max-width: 280px; height: auto; aspect-ratio: 1; }
+}
+
+/* Ordini del fornitore */
+.frn-ord-stato { margin: 4px 0 0; font-size: 15px; font-weight: 500; color: #3B4A63; overflow-wrap: anywhere; }
+.frn-ord-urgente { color: #8A1C1C; font-weight: 700; }
+.frn-ordine:target { outline: 3px solid #C9DFFA; }
+.frn-ordine .adm-avviso { margin: 12px 0 0; }
+
+/* Azienda e Pagamenti */
+.frn-compl { display: flex; flex-direction: column; gap: 6px; padding: 18px 20px; background: #fff; border: 1px solid #E3E8F0; border-radius: 16px; }
+.frn-compl .adm-barra { width: 100%; max-width: 480px; }
+.frn-compl p { margin: 0; }
+.frn-form .adm-campo input[type=text], .frn-form .adm-campo input[type=email] { min-height: 44px; padding: 8px 12px; border: 1.5px solid #D7DEE8; border-radius: 10px; font: inherit; font-size: 15px; font-weight: 500; color: #0F1B33; width: 100%; box-sizing: border-box; background: #fff; }
+.frn-form .adm-campo input:focus { outline: 3px solid #C9DFFA; border-color: #0262BB; }
+.frn-errore-generale { margin: 0; }
