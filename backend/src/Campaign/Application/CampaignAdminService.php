@@ -13,6 +13,7 @@ use App\Delivery\Repository\PickupPointRepository;
 use App\Identity\Entity\User;
 use App\Pricing\PricingCalculator;
 use App\Shared\Http\ApiError;
+use App\Shared\Persistence\TransactionRunner;
 use App\Supplier\Entity\Supplier;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
@@ -36,6 +37,7 @@ final class CampaignAdminService
         private readonly CampaignRepository $campaigns,
         private readonly PickupPointRepository $pickupPoints,
         private readonly PricingCalculator $pricing,
+        private readonly TransactionRunner $transaction,
     ) {
     }
 
@@ -49,7 +51,7 @@ final class CampaignAdminService
         $now = new \DateTimeImmutable();
         $deadline = $this->parseDeadline($data['scadenza'] ?? null, 'scadenza', $now);
 
-        return $this->transactional(function () use ($admin, $data, $deadline, $now): array {
+        return $this->transaction->run(function () use ($admin, $data, $deadline, $now): array {
             $product = $this->findProduct($data['prodotto_id'] ?? null);
             $newProduct = null;   // creato qui ma salvato solo dopo tutte le validazioni
             if (null === $product) {
@@ -102,7 +104,7 @@ final class CampaignAdminService
     {
         $now = new \DateTimeImmutable();
 
-        return $this->transactional(function () use ($id, $data, $now): array {
+        return $this->transaction->run(function () use ($id, $data, $now): array {
             $campaign = $this->lock($id);
             if (\in_array($campaign->getStatus(), [CampaignStatus::OrdineFornitore, CampaignStatus::Consegnata], true)) {
                 throw new ApiError('CAMPAGNA_NON_MODIFICABILE', "Gruppo non modificabile: ordine già partito", 409);
@@ -239,7 +241,7 @@ final class CampaignAdminService
     {
         $now = new \DateTimeImmutable();
 
-        $this->transactional(function () use ($id, $now): void {
+        $this->transaction->run(function () use ($id, $now): void {
             $campaign = $this->lock($id);
             $actions = $this->actionsFor($campaign, $now);
             if (!$actions->canDelete) {
@@ -251,32 +253,6 @@ final class CampaignAdminService
 
             $this->em->remove($campaign);
         });
-    }
-
-    /**
-     * Transazione con salvataggio finale. Non usa wrapInTransaction(): in caso d'errore quello chiude
-     * l'EntityManager, mentre qui l'errore di validazione è una normale risposta 4xx.
-     *
-     * @template T
-     *
-     * @param callable(): T $work
-     *
-     * @return T
-     */
-    private function transactional(callable $work): mixed
-    {
-        $connection = $this->em->getConnection();
-        $connection->beginTransaction();
-        try {
-            $result = $work();
-            $this->em->flush();
-            $connection->commit();
-
-            return $result;
-        } catch (\Throwable $e) {
-            $connection->rollBack();
-            throw $e;
-        }
     }
 
     private function lock(string $id): Campaign
