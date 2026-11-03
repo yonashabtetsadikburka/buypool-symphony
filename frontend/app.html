@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/webp" href="img/favicon_buypool.webp">
+  <title>BuyPool</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+  <link rel="stylesheet" href="css/admin-gruppi.css">
+  <link rel="stylesheet" href="css/fornitore.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <div class="app-layout">
+    <div id="header-container"></div>
+    <main class="main-content">
+      <div id="content-area"></div>
+    </main>
+  </div>
+
+  <script src="./js/lib/qrcode.js"></script>
+  <script type="module">
+    import { initSession, getState, subscribe, clearSession } from './js/state.js';
+    import { isAuthenticated, isAdmin, logout } from './js/auth.js';
+    import { apiGet } from './js/api.js';
+    import { Header, GuestHeader, handleLogout, updateNotificationBadge } from './js/components/header.js';
+    import { ToastProvider } from './js/components/toast.js';
+    import { clearPageTimers } from './js/page-timers.js';
+    import { avviaSelectAuto } from './js/components/select-auto.js';
+
+    import { HomePage } from './js/pages/home.js';
+    import { DettaglioPage } from './js/pages/dettaglio.js';
+    import { DashboardPage } from './js/pages/dashboard.js';
+    import { FornitoriDettaglioPage } from './js/pages/fornitori-dettaglio.js';
+    import { WalletPage } from './js/pages/wallet.js';
+    import { PropostePage } from './js/pages/proposte.js';
+    import { NotifichePage } from './js/pages/notifiche.js';
+    import { ProfiloPage } from './js/pages/profilo.js';
+    import { PrivacyPage } from './js/pages/privacy.js';
+    import { AcquistiPage } from './js/pages/acquisti.js';
+    import { destinazioneAcquisti } from './js/acquisti-redirect.js';
+    import { AdminCampagnePage } from './js/pages/admin/campagne.js';
+    import { AdminGruppoPage } from './js/pages/admin/gruppo.js';
+    import { AdminDashboardPage } from './js/pages/admin/dashboard.js';
+    import { AdminUtentiPage } from './js/pages/admin/utenti.js';
+    import { AdminFornitoriPage } from './js/pages/admin/fornitori.js';
+    import { AdminPropostePage } from './js/pages/admin/proposte.js';
+    import { AdminOrdiniRitiriPage } from './js/pages/admin/ordini-ritiri.js';
+    import { AdminMessaggiPage } from './js/pages/admin/messaggi.js';
+    import { PagamentoSuccessoPage, PagamentoAnnullatoPage } from './js/pages/pagamento-successo.js';
+    import { FornitorePage } from './js/pages/fornitore.js';
+
+
+    window.handleLogout = handleLogout;
+
+    const routes = [
+      { path: '/', component: HomePage, guard: 'auth', public: true },
+      { path: '/campagne/:id', component: DettaglioPage, guard: 'auth', public: true },
+      { path: '/dashboard', component: DashboardPage, guard: 'auth' },
+      { path: '/fornitori/:id', component: FornitoriDettaglioPage, guard: 'auth' },
+      { path: '/wallet', component: WalletPage, guard: 'auth' },
+      { path: '/proposte', component: PropostePage, guard: 'auth' },
+      { path: '/notifiche', component: NotifichePage, guard: 'auth' },
+
+      { path: '/profilo', component: ProfiloPage, guard: 'auth' },
+      { path: '/privacy', component: () => PrivacyPage(), guard: 'auth' },
+      { path: '/acquisti', component: AcquistiPage, guard: 'auth' },
+      // Vecchie pagine unite in "I miei acquisti": redirect alla scheda coerente (ex-link e segnalibri)
+      { path: '/partecipazioni', guard: 'auth', redirect: (q) => destinazioneAcquisti('/partecipazioni', q) },
+      { path: '/ordini', guard: 'auth', redirect: (q) => destinazioneAcquisti('/ordini', q) },
+      { path: '/admin', component: AdminDashboardPage, guard: 'admin' },
+      { path: '/admin/campagne', component: AdminCampagnePage, guard: 'admin' },
+      { path: '/admin/campagne/:id', component: AdminGruppoPage, guard: 'admin' },
+      { path: '/admin/utenti', component: AdminUtentiPage, guard: 'admin' },
+      { path: '/admin/fornitori', component: AdminFornitoriPage, guard: 'admin' },
+
+      { path: '/admin/proposte', component: AdminPropostePage, guard: 'admin' },
+      { path: '/admin/ordini', component: AdminOrdiniRitiriPage, guard: 'admin' },
+      // vecchia pagina Ritiri, unita a Ordini: vecchi segnalibri e link
+      { path: '/admin/ritiri', guard: 'admin', redirect: () => '/admin/ordini?scheda=pronti' },
+      { path: '/admin/messaggi', component: AdminMessaggiPage, guard: 'admin' },
+      // vecchia pagina "Invio notifiche"
+      { path: '/admin/notifiche', guard: 'admin', redirect: () => '/admin/messaggi' },
+      { path: '/pagamento/successo', component: PagamentoSuccessoPage, guard: 'auth' },
+      { path: '/pagamento/annullato', component: PagamentoAnnullatoPage, guard: 'auth' },
+      { path: '/fornitore', component: FornitorePage, guard: 'auth' },
+      // vecchio nome della sezione: segnalibri e link
+      { path: '/fornitore/campagne', guard: 'auth', redirect: () => '/fornitore/gruppi' },
+      { path: '/fornitore/proposte/nuova', component: (p) => FornitorePage({ ...p, sezione: 'proposte', vista: 'nuova' }), guard: 'auth' },
+      { path: '/fornitore/proposte/:id/modifica', component: (p) => FornitorePage({ ...p, sezione: 'proposte', vista: 'modifica' }), guard: 'auth' },
+      { path: '/fornitore/proposte/:id', component: (p) => FornitorePage({ ...p, sezione: 'proposte', vista: 'dettaglio' }), guard: 'auth' },
+      { path: '/fornitore/gruppi/:id', component: (p) => FornitorePage({ ...p, sezione: 'gruppi' }), guard: 'auth' },
+      { path: '/fornitore/:sezione', component: FornitorePage, guard: 'auth' },
+    ];
+
+    function renderShell() {
+      const { user } = getState();
+      if (!user) {
+        document.getElementById('header-container').innerHTML = GuestHeader();
+        ToastProvider();
+        return;
+      }
+
+      document.getElementById('header-container').innerHTML = Header();
+      ToastProvider();
+    }
+
+    function matchRoute(hash) {
+      for (const route of routes) {
+        const paramNames = [];
+        const regexPath = route.path.replace(/:([^/]+)/g, (_, name) => {
+          paramNames.push(name);
+          return '([^/]+)';
+        });
+        const regex = new RegExp(`^${regexPath}$`);
+        const match = hash.match(regex);
+        if (match) {
+          const params = {};
+          paramNames.forEach((name, i) => {
+            params[name] = match[i + 1];
+          });
+          return { route, params };
+        }
+      }
+      return null;
+    }
+
+    let lastRenderedPath = null;
+
+    function handleRoute() {
+      const { isLoading } = getState();
+      if (isLoading) return;
+
+      const rawHash = window.location.hash.slice(1) || '/';
+      const hash = rawHash.split('?')[0];
+
+      // Stesso percorso con query diversa (es. filtri/ricerca dell'elenco):
+      // il componente resta montato, la pagina ascolta hashchange e riapplica
+      // i filtri senza ricaricare i dati.
+      if (hash === lastRenderedPath) return;
+
+      const result = matchRoute(hash);
+      const guestAllowed = !!result?.route?.public;
+
+      if (!isAuthenticated() && !guestAllowed) {
+        try { sessionStorage.setItem('postLoginHash', rawHash); } catch (e) {}
+        window.location.href = 'index.html';
+        return;
+      }
+
+      if (result?.route?.redirect) {
+        const q = new URLSearchParams(rawHash.split('?')[1] || '');
+        window.location.replace('#' + result.route.redirect(q));
+        return;
+      }
+
+      renderShell();
+      initDropdowns();
+      if (isAuthenticated()) updateNotificationBadge();
+      clearPageTimers();
+
+      if (!result) {
+        document.getElementById('content-area').innerHTML = `
+          <div class="empty-state">
+            <h2 class="empty-state-title">Pagina non trovata</h2>
+            <a href="#/" class="btn btn-default">Torna alla Home</a>
+          </div>
+        `;
+        return;
+      }
+
+      const { route, params } = result;
+
+      if (route.guard === 'admin' && !isAdmin()) {
+        document.getElementById('content-area').innerHTML = `
+          <div class="empty-state">
+            <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+            </svg>
+            <h2 class="empty-state-title">Accesso non autorizzato</h2>
+            <p class="empty-state-description">Non hai i permessi necessari per accedere a questa pagina.</p>
+            <a href="#/" class="btn btn-default">Torna alla Home</a>
+          </div>
+        `;
+        return;
+      }
+
+      lastRenderedPath = hash;
+      route.component(params);
+    }
+
+    // === Dropdown toggle ===
+    function closeAllDropdowns() {
+      document.querySelectorAll('.dropdown-menu.open').forEach(m => m.classList.remove('open'));
+      document.querySelectorAll('[data-dropdown-toggle][aria-expanded="true"]').forEach(t => t.setAttribute('aria-expanded', 'false'));
+    }
+    function initDropdowns() {
+      document.querySelectorAll('[data-dropdown-toggle]').forEach(trigger => {
+        const targetId = trigger.getAttribute('data-dropdown-toggle');
+        const menu = document.getElementById(targetId)?.querySelector('.dropdown-menu');
+        if (!menu) return;
+        trigger.addEventListener('click', e => {
+          e.stopPropagation();
+          const wasOpen = menu.classList.contains('open');
+          closeAllDropdowns();
+          if (!wasOpen) { menu.classList.add('open'); trigger.setAttribute('aria-expanded', 'true'); }
+        });
+      });
+    }
+
+    // === Auto-logout su scadenza sessione (solo se loggati) ===
+    async function validateSession() {
+      if (!isAuthenticated()) return;
+      try {
+        await apiGet('/io');
+      } catch {
+        clearSession();
+        window.location.href = 'index.html';
+      }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && isAuthenticated()) {
+        validateSession();
+      }
+    });
+
+    window.addEventListener('storage', e => {
+      if (e.key === 'buypool_user' && !e.newValue && isAuthenticated()) {
+        clearSession();
+        window.location.href = 'index.html';
+      }
+    });
+
+    document.addEventListener('click', closeAllDropdowns);
+
+    initSession();
+    avviaSelectAuto();
+
+    window.addEventListener('hashchange', handleRoute);
+
+    subscribe(() => {
+      handleRoute();
+    });
+
+    handleRoute();
+  </script>
+</body>
+</html>

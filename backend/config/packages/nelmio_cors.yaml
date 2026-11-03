@@ -2,6 +2,8 @@ nelmio_cors:
     defaults:
         origin_regex: false
         allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
+        # Il frontend è su un'altra porta e l'identità è nel cookie di sessione: il browser lo invia solo con questo.
+        allow_credentials: true
         allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
         allow_headers: ['Content-Type', 'Authorization']
         expose_headers: ['Link']

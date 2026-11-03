@@ -55,3 +55,12 @@ Diario del percorso di riscrittura di BuyPool in Symfony, in ordine cronologico.
 - Differenze dal legacy: importi in centesimi e id UUID (`colletta_id` resta il nome del campo); la quantità deve essere un intero (il legacy convertiva qualsiasi valore) ma resta limitata a 1-99; `success_url` e `cancel_url` puntano a `FRONTEND_URL/campaigns/{id}`; mancano notifiche ed email al cliente e al fornitore (US-09, US-23); il Customer Stripe è salvato in `users.stripe_customer_id`.
 - Anomalia del legacy conservata: chi ha già una riga di adesione, anche rimborsata o annullata, non può riaderire allo stesso gruppo (`GIA_PARTECIPI`, e vincolo unico su gruppo e cliente). Da decidere se è voluto.
 - Estratto `TransactionRunner` (transazione manuale al posto di `wrapInTransaction`), ora usato anche dalla gestione admin dei gruppi.
+
+## 2026-11-03 · Frontend del legacy collegato al nuovo backend (prova parziale)
+- Il frontend (`_private/frontend`, identico al legacy e fuori da git) è stato copiato in `frontend/` e adattato lì; l'originale non è stato toccato.
+- Scelta: un solo punto di adattamento, `frontend/js/compat.js`, invece di riscrivere le pagine. Traduce i percorsi (`/login` → `/api/auth/login`, `/campagne` → `/api/campaigns`, `/pagamento/acconto-checkout` → `/api/payments/deposit-checkout`, `/campagne/{id}/modifica` → `PATCH`), aggiunge ai campi `*_cents` il valore in euro che le pagine leggono, manda i prezzi in centesimi e converte i moduli multipart in JSON (foto ignorate).
+- Sessione: il legacy usava un finto "token" in `localStorage`; la sessione vera è il cookie. Ora le chiamate usano `credentials: 'include'` e senza Bearer. L'uscita chiude anche la sessione sul server.
+- Backend: `nelmio_cors.yaml` con `allow_credentials: true` e `CORS_ALLOW_ORIGIN` di default `http://localhost:8888` (frontend). Prova con il server PHP: l'elenco gruppi risponde con gli header CORS giusti e la richiesta preflight del login è accettata.
+- Id UUID: corretti `consegna-metodi.js` e `dettaglio.js`, che trattavano la sede come numero.
+- Limiti noti: le pagine su funzioni non ancora migrate (profilo, notifiche, acquisti, wallet, fornitore, proposte, recensioni, QR) mostrano un errore; l'admin può chiamare create/edit/delete ma l'elenco admin e la scelta del fornitore non esistono; l'adesione non compare dopo il pagamento finché non c'è il webhook (US-07). Le fixture hanno gruppi già scaduti.
+- Non verificato: il comportamento nel browser (non ho un browser qui); verificati con test le funzioni di `compat.js` e, con curl, CORS e lista gruppi.

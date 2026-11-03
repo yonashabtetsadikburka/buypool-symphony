@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/webp" href="img/favicon_buypool.webp">
+  <title>BuyPool - Login</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/accesso.css">
+</head>
+<body>
+  <div class="main-content" style="margin-left: 0; margin-top: 0;"></div>
+
+  <script type="module">
+    import { LoginPage } from './js/pages/login.js';
+    import { RegisterPage } from './js/pages/register.js';
+    import { FornitoreAttivaPage } from './js/pages/fornitore-attiva.js';
+    import { PasswordDimenticataPage, PasswordResetPage } from './js/pages/password-dimenticata.js';
+    import { PrivacyPage } from './js/pages/privacy.js';
+    import { OAuthEsitoPage } from './js/pages/oauth.js';
+    import { initSession, getState, clearSession } from './js/state.js';
+    import { landingPerRuolo } from './js/auth.js';
+    import { apiGet } from './js/api.js';
+
+    initSession();
+
+    function handleRoute() {
+      const rawHash = window.location.hash.slice(1) || '/login';
+      const hash = rawHash.split('?')[0];
+
+      if (hash === '/register') {
+        RegisterPage();
+      } else if (hash === '/fornitore/attiva') {
+        FornitoreAttivaPage();
+      } else if (hash === '/password/dimenticata') {
+        PasswordDimenticataPage();
+      } else if (hash === '/password/reset') {
+        PasswordResetPage();
+      } else if (hash === '/privacy') {
+        PrivacyPage();
+      } else if (hash === '/oauth/esito') {
+        OAuthEsitoPage();
+      } else {
+        LoginPage();
+      }
+    }
+
+    // Già autenticato su Accedi/Registrati: vai alla pagina iniziale (la sessione è verificata sul server).
+    async function routeOrRedirect() {
+      const hash = (window.location.hash.slice(1) || '/login').split('?')[0];
+      const paginaAccesso = hash === '/login' || hash === '/register' || hash === '/';
+      const { user } = getState();
+      if (paginaAccesso && user) {
+        try {
+          const io = await apiGet('/io');
+          window.location.replace(landingPerRuolo(io.dati || user));
+          return;
+        } catch (e) {
+          clearSession();
+        }
+      }
+      handleRoute();
+    }
+
+    window.addEventListener('hashchange', routeOrRedirect);
+    routeOrRedirect();
+  </script>
+</body>
+</html>
