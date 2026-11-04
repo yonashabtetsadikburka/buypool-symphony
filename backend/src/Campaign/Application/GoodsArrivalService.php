@@ -57,7 +57,8 @@ final class GoodsArrivalService
             if (null === $order) {
                 throw new ApiError('ORDINE_FORNITORE_MANCANTE', 'Manca l\'ordine al fornitore di questo gruppo', 409);
             }
-            if (\in_array($order->getStatus(), [SupplierOrderStatus::Inviato, SupplierOrderStatus::Ricevuto, SupplierOrderStatus::InPreparazione], true)) {
+            if (\in_array($order->getStatus(), [SupplierOrderStatus::Inviato, SupplierOrderStatus::Ricevuto, SupplierOrderStatus::InPreparazione, SupplierOrderStatus::Spedito], true)) {
+                // Spedito incluso: il legacy lo lasciava com'era (mai "completato" per il fornitore) e il gruppo non poteva più consegnare.
                 $order->setStatus(SupplierOrderStatus::Evaso);
             }
             $order->setDeliveredAt($order->getDeliveredAt() ?? new \DateTimeImmutable());

@@ -13,6 +13,9 @@ enum SupplierOrderStatus: string
     case Inviato = 'inviato';
     case Ricevuto = 'ricevuto';
     case InPreparazione = 'in_preparazione';
+
+    /** Spedito dal fornitore verso la Sede Centrale (legacy: fornitore_ordine_spedisci). Prima di "merce arrivata". */
+    case Spedito = 'spedito';
     case Evaso = 'evaso';
 
     /**
