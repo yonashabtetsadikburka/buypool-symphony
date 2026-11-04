@@ -61,6 +61,10 @@ class Campaign
     #[ORM\Column]
     private int $currentPriceCents;
 
+    /** Prezzo unitario FISSATO alla chiusura (legacy: collette.prezzo_finale). Da lì in poi non cambia più. */
+    #[ORM\Column(nullable: true)]
+    private ?int $finalPriceCents = null;
+
     #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2, options: ['default' => '10.00'])]
     private string $commissionRate = '10.00';
 
@@ -250,6 +254,22 @@ class Campaign
         }
 
         $this->currentPriceCents = $currentPriceCents;
+
+        return $this;
+    }
+
+    public function getFinalPriceCents(): ?int
+    {
+        return $this->finalPriceCents;
+    }
+
+    public function setFinalPriceCents(?int $finalPriceCents): self
+    {
+        if (null !== $finalPriceCents && $finalPriceCents < 0) {
+            throw new \InvalidArgumentException('Price cannot be negative.');
+        }
+
+        $this->finalPriceCents = $finalPriceCents;
 
         return $this;
     }

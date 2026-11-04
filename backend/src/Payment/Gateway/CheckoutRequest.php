@@ -3,7 +3,7 @@
 namespace App\Payment\Gateway;
 
 /** Richiesta di una sessione di pagamento per l'acconto di un'adesione. */
-final class DepositCheckoutRequest
+final class CheckoutRequest
 {
     /**
      * @param array<string, string> $metadata copiati sulla sessione e sul PaymentIntent

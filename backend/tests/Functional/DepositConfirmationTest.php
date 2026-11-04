@@ -15,7 +15,7 @@ use App\Identity\Entity\User;
 use App\Participation\Entity\Participation;
 use App\Participation\Enum\ParticipationStatus;
 use App\Participation\Service\DepositConfirmationService;
-use App\Participation\Service\DepositOutcome;
+use App\Participation\Service\PaymentOutcome;
 use App\Participation\Service\PaidDeposit;
 use App\Payment\Entity\Payment;
 use App\Payment\Enum\PaymentStatus;
@@ -71,7 +71,7 @@ final class DepositConfirmationTest extends KernelTestCase
 
         $outcome = $this->service->confirm($this->paid($campaign, $user, quantity: 3, amount: 540, pi: 'pi_1'));
 
-        self::assertSame(DepositOutcome::Created, $outcome);
+        self::assertSame(PaymentOutcome::Created, $outcome);
         $participation = $this->participation($campaign, $user);
         self::assertSame(3, $participation->getQuantity());
         self::assertSame(540, $participation->getDepositCents());
@@ -125,8 +125,8 @@ final class DepositConfirmationTest extends KernelTestCase
         $user = $this->customer();
         $paid = $this->paid($campaign, $user, quantity: 2, amount: 400, pi: 'pi_dup');
 
-        self::assertSame(DepositOutcome::Created, $this->service->confirm($paid));
-        self::assertSame(DepositOutcome::AlreadyHandled, $this->service->confirm($paid));
+        self::assertSame(PaymentOutcome::Created, $this->service->confirm($paid));
+        self::assertSame(PaymentOutcome::AlreadyHandled, $this->service->confirm($paid));
 
         $this->em->refresh($campaign);
         self::assertSame(2, $campaign->getCurrentQuantity());
@@ -142,7 +142,7 @@ final class DepositConfirmationTest extends KernelTestCase
 
         $outcome = $this->service->confirm($this->paid($campaign, $user, quantity: 2, amount: 400, pi: 'pi_second'));
 
-        self::assertSame(DepositOutcome::Refunded, $outcome);
+        self::assertSame(PaymentOutcome::Refunded, $outcome);
         self::assertSame(['rimborso_duplicato_pi_second' => 'pi_second'], $this->stripe->refunds);
         $this->em->refresh($campaign);
         self::assertSame(2, $campaign->getCurrentQuantity());
@@ -150,7 +150,7 @@ final class DepositConfirmationTest extends KernelTestCase
         self::assertNotNull($row);
         self::assertSame(PaymentStatus::Rimborsato, $row->getStatus());
         // Evento ripetuto: nessun secondo rimborso.
-        self::assertSame(DepositOutcome::AlreadyHandled, $this->service->confirm($this->paid($campaign, $user, quantity: 2, amount: 400, pi: 'pi_second')));
+        self::assertSame(PaymentOutcome::AlreadyHandled, $this->service->confirm($this->paid($campaign, $user, quantity: 2, amount: 400, pi: 'pi_second')));
     }
 
     public function testLatePaymentOnAnExpiredGroupIsRefundedAndCreatesNothing(): void
@@ -160,7 +160,7 @@ final class DepositConfirmationTest extends KernelTestCase
 
         $outcome = $this->service->confirm($this->paid($campaign, $user, quantity: 1, amount: 200, pi: 'pi_late'));
 
-        self::assertSame(DepositOutcome::Refunded, $outcome);
+        self::assertSame(PaymentOutcome::Refunded, $outcome);
         self::assertSame(0, $this->em->getRepository(Participation::class)->count(['campaign' => $campaign]));
         $this->em->refresh($campaign);
         self::assertSame(0, $campaign->getCurrentQuantity());
@@ -175,7 +175,7 @@ final class DepositConfirmationTest extends KernelTestCase
 
         $outcome = $this->service->confirm($this->paid($campaign, $this->customer(), quantity: 1, amount: 200, pi: 'pi_closed'));
 
-        self::assertSame(DepositOutcome::Refunded, $outcome);
+        self::assertSame(PaymentOutcome::Refunded, $outcome);
     }
 
     public function testFailedRefundOfAnExtraPaymentRaisesSoTheEventCanBeRetried(): void
@@ -193,7 +193,7 @@ final class DepositConfirmationTest extends KernelTestCase
 
         // Nulla è stato registrato: al secondo tentativo il pagamento viene rimborsato.
         $this->stripe->failRefunds = false;
-        self::assertSame(DepositOutcome::Refunded, $this->service->confirm($paid));
+        self::assertSame(PaymentOutcome::Refunded, $this->service->confirm($paid));
         self::assertArrayHasKey('rimborso_duplicato_pi_retry', $this->stripe->refunds);
     }
 
@@ -238,9 +238,9 @@ final class DepositConfirmationTest extends KernelTestCase
         $badIds = new PaidDeposit('pi_badid', 200, 'pm_1', 'succeeded', ['colletta_id' => 'x', 'utente_id' => 'y', 'delivery_type' => 'ritiro_sede']);
         $unknown = new PaidDeposit('pi_unknown', 200, 'pm_1', 'succeeded', ['colletta_id' => '018f0000-0000-7000-8000-000000000000', 'utente_id' => $user->getId()->toRfc4122(), 'delivery_type' => 'ritiro_sede']);
 
-        self::assertSame(DepositOutcome::Ignored, $this->service->confirm($noDelivery));
-        self::assertSame(DepositOutcome::Ignored, $this->service->confirm($badIds));
-        self::assertSame(DepositOutcome::Ignored, $this->service->confirm($unknown));
+        self::assertSame(PaymentOutcome::Ignored, $this->service->confirm($noDelivery));
+        self::assertSame(PaymentOutcome::Ignored, $this->service->confirm($badIds));
+        self::assertSame(PaymentOutcome::Ignored, $this->service->confirm($unknown));
         self::assertSame(0, $this->em->getRepository(Participation::class)->count([]));
         self::assertSame([], $this->stripe->refunds);
     }

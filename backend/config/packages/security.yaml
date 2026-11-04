@@ -48,6 +48,8 @@ security:
         - { path: ^/api/campaigns/[^/]+/join$, roles: PUBLIC_ACCESS }
         # Elenco e dettaglio dei gruppi sono pubblici (GET); creare, modificare ed eliminare è solo dell'admin.
         - { path: ^/api/campaigns(/[^/]+)?$, methods: [POST, PATCH, PUT, DELETE], roles: ROLE_ADMIN }
+        # Webhook di Stripe: nessun login, la richiesta è autenticata dalla firma (Stripe-Signature).
+        - { path: ^/api/stripe/webhook$, roles: PUBLIC_ACCESS }
         # Pagamenti: serve un utente collegato (l'account sospeso è già bloccato dal UserChecker).
         - { path: ^/api/payments, roles: IS_AUTHENTICATED_FULLY }
 

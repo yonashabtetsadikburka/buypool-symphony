@@ -16,6 +16,8 @@ const REGOLE = [
   { metodo: 'POST', da: /^\/campagne\/([0-9a-f-]{36})\/modifica$/i, a: (m) => `/api/campaigns/${m[1]}`, metodoNuovo: 'PATCH' },
   { metodo: 'DELETE', da: /^\/campagne\/([0-9a-f-]{36})$/i, a: (m) => `/api/campaigns/${m[1]}` },
   { metodo: 'POST', da: /^\/pagamento\/acconto-checkout$/, a: () => '/api/payments/deposit-checkout' },
+  { metodo: 'POST', da: /^\/pagamento\/checkout$/, a: () => '/api/payments/balance-checkout' },
+  { metodo: 'GET', da: /^\/pagamento\/stato$/, a: () => '/api/payments/status' },
 ];
 
 /** Percorso e metodo nuovi per una chiamata legacy; se non c'è una regola resta com'è (e il server risponderà 404). */

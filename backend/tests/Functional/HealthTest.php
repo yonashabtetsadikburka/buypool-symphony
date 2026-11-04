@@ -27,6 +27,8 @@ final class HealthTest extends WebTestCase
 
         // Real env vars win over .env files, so the kernel boots with an
         // unreachable database without touching any committed file.
+        $previousServer = $_SERVER['DATABASE_URL'] ?? null;
+        $previousEnv = $_ENV['DATABASE_URL'] ?? null;
         $_SERVER['DATABASE_URL'] = 'mysql://root:root@127.0.0.1:1/buypool_unreachable?serverVersion=8.0';
         $_ENV['DATABASE_URL'] = $_SERVER['DATABASE_URL'];
 
@@ -34,7 +36,17 @@ final class HealthTest extends WebTestCase
             $client = static::createClient();
             $client->request('GET', '/api/health');
         } finally {
-            unset($_SERVER['DATABASE_URL'], $_ENV['DATABASE_URL']);
+            // Si ripristina il valore di prima (non basta toglierlo): i test che girano dopo ne hanno bisogno.
+            if (null === $previousServer) {
+                unset($_SERVER['DATABASE_URL']);
+            } else {
+                $_SERVER['DATABASE_URL'] = $previousServer;
+            }
+            if (null === $previousEnv) {
+                unset($_ENV['DATABASE_URL']);
+            } else {
+                $_ENV['DATABASE_URL'] = $previousEnv;
+            }
         }
 
         self::assertResponseStatusCodeSame(503);

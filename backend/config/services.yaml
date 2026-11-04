@@ -45,6 +45,9 @@ when@test:
         App\Participation\Service\DepositConfirmationService:
             autowire: true
             public: true
+        App\Participation\Service\BalanceService:
+            autowire: true
+            public: true
 
         # Google login without calling Google
         App\Tests\Support\FakeGoogleIdTokenVerifier: ~
