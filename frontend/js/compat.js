@@ -16,6 +16,9 @@ const REGOLE = [
   { metodo: 'POST', da: /^\/campagne\/([0-9a-f-]{36})\/modifica$/i, a: (m) => `/api/campaigns/${m[1]}`, metodoNuovo: 'PATCH' },
   { metodo: 'DELETE', da: /^\/campagne\/([0-9a-f-]{36})$/i, a: (m) => `/api/campaigns/${m[1]}` },
   { metodo: 'POST', da: /^\/pagamento\/acconto-checkout$/, a: () => '/api/payments/deposit-checkout' },
+  { metodo: 'POST', da: /^\/campagne\/([0-9a-f-]{36})\/chiusura$/i, a: (m) => `/api/campaigns/${m[1]}/close` },
+  { metodo: 'POST', da: /^\/admin\/gruppi\/([0-9a-f-]{36})\/annulla$/i, a: (m) => `/api/campaigns/${m[1]}/cancel` },
+  { metodo: 'POST', da: /^\/campagne\/([0-9a-f-]{36})\/invia-fornitore$/i, a: (m) => `/api/campaigns/${m[1]}/send-to-supplier` },
   { metodo: 'POST', da: /^\/pagamento\/checkout$/, a: () => '/api/payments/balance-checkout' },
   { metodo: 'GET', da: /^\/pagamento\/stato$/, a: () => '/api/payments/status' },
 ];

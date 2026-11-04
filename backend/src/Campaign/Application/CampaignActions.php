@@ -30,6 +30,8 @@ final class CampaignActions
         /** Spostare la scadenza in avanti. */
         public readonly bool $canExtendDeadline,
         public readonly bool $canDelete,
+        /** Annullare il gruppo rimborsando tutti (legacy: azione "annulla"). */
+        public readonly bool $canCancel = false,
     ) {
     }
 
@@ -49,14 +51,14 @@ final class CampaignActions
             if (!$minimumReached) {
                 $free = 0 === $liveParticipations;
 
-                return new self(self::APERTO, $free, true, true, $free);
+                return new self(self::APERTO, $free, true, true, $free, true);
             }
 
-            return new self(self::ATTIVO, false, true, true, false);
+            return new self(self::ATTIVO, false, true, true, false, true);
         }
 
         if ($minimumReached && !$closed) {
-            return new self(self::SCADUTO_DA_CHIUDERE, false, true, false, false);
+            return new self(self::SCADUTO_DA_CHIUDERE, false, true, false, false, true);
         }
 
         return new self(self::BLOCCATO, false, false, false, false);

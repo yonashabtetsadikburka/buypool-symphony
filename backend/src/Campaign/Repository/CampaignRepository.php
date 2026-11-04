@@ -154,6 +154,73 @@ class CampaignRepository extends ServiceEntityRepository
         return $counts;
     }
 
+    /**
+     * Gruppi scaduti ancora da chiudere (senza data di chiusura). Un gruppo annullato si riprende solo se ha ancora
+     * adesioni con acconto da rimborsare (legacy: campagne_da_chiudere).
+     *
+     * @return list<Campaign>
+     */
+    public function findToClose(\DateTimeImmutable $now): array
+    {
+        $qb = $this->createQueryBuilder('c');
+        $live = $this->getEntityManager()->createQueryBuilder()
+            ->select('1')
+            ->from(Participation::class, 'p')
+            ->where('p.campaign = c')
+            ->andWhere('p.status IN (:live)')
+            ->andWhere('p.depositCents > 0')
+            ->getDQL();
+
+        /** @var list<Campaign> $found */
+        $found = $qb
+            ->where('c.deadline <= :now')
+            ->andWhere('c.closedAt IS NULL')
+            ->andWhere('c.status NOT IN (:finished) OR (c.status = :cancelled AND EXISTS ('.$live.'))')
+            ->setParameter('now', $now)
+            ->setParameter('finished', [CampaignStatus::Consegnata, CampaignStatus::Annullata, CampaignStatus::OrdinePronto, CampaignStatus::OrdineFornitore])
+            ->setParameter('cancelled', CampaignStatus::Annullata)
+            ->setParameter('live', self::LIVE_PARTICIPATION)
+            ->orderBy('c.deadline', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $found;
+    }
+
+    /**
+     * Gruppi annullati con adesioni ancora da rimborsare (un rimborso era fallito): il lavoro va ripreso.
+     *
+     * @return list<Campaign>
+     */
+    public function findCancelledWithLiveParticipations(): array
+    {
+        $live = $this->getEntityManager()->createQueryBuilder()
+            ->select('1')
+            ->from(Participation::class, 'p')
+            ->where('p.campaign = c')
+            ->andWhere('p.status IN (:live)')
+            ->getDQL();
+
+        /** @var list<Campaign> $found */
+        $found = $this->createQueryBuilder('c')
+            ->where('c.status = :cancelled')
+            ->andWhere('EXISTS ('.$live.')')
+            ->setParameter('cancelled', CampaignStatus::Annullata)
+            ->setParameter('live', self::LIVE_PARTICIPATION)
+            ->getQuery()
+            ->getResult();
+
+        return $found;
+    }
+
+    /** Adesioni che hanno ancora soldi del cliente in mano: da rimborsare se il gruppo salta. */
+    private const LIVE_PARTICIPATION = [
+        ParticipationStatus::Prenotata,
+        ParticipationStatus::Confermata,
+        ParticipationStatus::Pagata,
+        ParticipationStatus::AzioneRichiesta,
+    ];
+
     /** Adesioni "vive" del gruppo: tutte tranne annullate e rimborsate. */
     public function countLiveParticipations(Campaign $campaign): int
     {

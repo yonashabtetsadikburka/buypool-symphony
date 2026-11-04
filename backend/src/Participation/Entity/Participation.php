@@ -49,6 +49,10 @@ class Participation
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $paidAt = null;
 
+    /** Entro quando il cliente deve sistemare il pagamento del saldo; dopo l'adesione è annullata (legacy: saldo_scadenza). */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $balanceDueAt = null;
+
     public function __construct(Campaign $campaign, User $user, int $quantity)
     {
         if ($quantity <= 0) {
@@ -156,6 +160,18 @@ class Participation
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getBalanceDueAt(): ?\DateTimeImmutable
+    {
+        return $this->balanceDueAt;
+    }
+
+    public function setBalanceDueAt(?\DateTimeImmutable $balanceDueAt): self
+    {
+        $this->balanceDueAt = $balanceDueAt;
+
+        return $this;
     }
 
     public function getPaidAt(): ?\DateTimeImmutable

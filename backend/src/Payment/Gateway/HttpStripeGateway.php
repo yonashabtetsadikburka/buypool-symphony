@@ -58,6 +58,46 @@ final class HttpStripeGateway implements StripeGateway
         return $this->createCheckout($request, []);
     }
 
+    public function chargeBalanceOffSession(OffSessionCharge $charge): PaymentIntentData
+    {
+        return PaymentIntentData::fromStripeObject($this->call('POST', '/payment_intents', [
+            'amount' => $charge->amountCents,
+            'currency' => 'eur',
+            'customer' => $charge->customerId,
+            'payment_method' => $charge->paymentMethodId,
+            'off_session' => 'true',
+            'confirm' => 'true',
+            // Niente metodi con redirect: un addebito senza il cliente non può reindirizzare.
+            'automatic_payment_methods' => ['enabled' => 'true', 'allow_redirects' => 'never'],
+            'metadata' => $charge->metadata,
+        ], $charge->idempotencyKey));
+    }
+
+    public function findBalanceIntent(string $customerId, string $participationId, int $amountCents): ?PaymentIntentData
+    {
+        $data = $this->call('GET', '/payment_intents', ['customer' => $customerId, 'limit' => 50]);
+
+        $inProgress = null;
+        foreach (\is_array($data['data'] ?? null) ? $data['data'] : [] as $object) {
+            if (!\is_array($object)) {
+                continue;
+            }
+            $intent = PaymentIntentData::fromStripeObject($object);
+            $requested = (int) ($object['amount'] ?? 0);
+            if (($intent->metadata['tipo'] ?? null) !== 'saldo' || ($intent->metadata['prenotazione_id'] ?? null) !== $participationId || $requested !== $amountCents) {
+                continue;
+            }
+            if ('succeeded' === $intent->status) {
+                return $intent;
+            }
+            if (\in_array($intent->status, ['processing', 'requires_capture'], true)) {
+                $inProgress = $intent;
+            }
+        }
+
+        return $inProgress;
+    }
+
     public function retrieveCheckoutSession(string $sessionId): CheckoutSessionStatus
     {
         $data = $this->call('GET', '/checkout/sessions/'.rawurlencode($sessionId));
@@ -151,7 +191,12 @@ final class HttpStripeGateway implements StripeGateway
 
         if ($status >= 400) {
             $error = \is_array($data['error'] ?? null) ? $data['error'] : [];
-            throw new StripeGatewayException(\is_string($error['message'] ?? null) ? $error['message'] : 'Richiesta a Stripe rifiutata.');
+            $intent = \is_array($error['payment_intent'] ?? null) ? ($error['payment_intent']['id'] ?? null) : null;
+            throw new StripeGatewayException(
+                \is_string($error['message'] ?? null) ? $error['message'] : 'Richiesta a Stripe rifiutata.',
+                stripeCode: \is_string($error['code'] ?? null) ? $error['code'] : null,
+                paymentIntentId: \is_string($intent) ? $intent : null,
+            );
         }
 
         return $data;

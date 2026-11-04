@@ -26,6 +26,18 @@ interface StripeGateway
     /** Pagamento del saldo da parte del cliente. */
     public function createBalanceCheckout(CheckoutRequest $request): CheckoutSession;
 
+    /**
+     * Addebita il saldo con la carta salvata, senza il cliente. Se la banca rifiuta o chiede una nuova
+     * autorizzazione lancia {@see StripeGatewayException} con codice e (se c'è) PaymentIntent del tentativo.
+     */
+    public function chargeBalanceOffSession(OffSessionCharge $charge): PaymentIntentData;
+
+    /**
+     * Addebito di saldo già fatto per questa adesione e questo importo (riuscito o ancora in corso), se esiste.
+     * Evita il doppio addebito quando un giro precedente ha addebitato ma non ha finito di salvare.
+     */
+    public function findBalanceIntent(string $customerId, string $participationId, int $amountCents): ?PaymentIntentData;
+
     public function retrieveCheckoutSession(string $sessionId): CheckoutSessionStatus;
 
     public function retrievePaymentIntent(string $paymentIntentId): PaymentIntentData;
