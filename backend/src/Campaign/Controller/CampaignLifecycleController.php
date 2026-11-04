@@ -5,6 +5,7 @@ namespace App\Campaign\Controller;
 use App\Campaign\Application\CampaignAdminService;
 use App\Campaign\Application\CampaignCancellationService;
 use App\Campaign\Application\CampaignClosureService;
+use App\Campaign\Application\GoodsArrivalService;
 use App\Campaign\Entity\Campaign;
 use App\Identity\Entity\User;
 use App\Shared\Http\ApiError;
@@ -92,6 +93,15 @@ final class CampaignLifecycleController
     public function sendToSupplier(string $id, SupplierOrderService $orders, #[CurrentUser] User $user): JsonResponse
     {
         return ApiResponse::ok($orders->send($this->find($id), $user));
+    }
+
+    /**
+     * "Merce arrivata": il gruppo diventa "consegnata", nascono i QR di ritiro e i clienti vengono avvisati.
+     */
+    #[Route('/api/campaigns/{id}/goods-arrived', name: 'api_campaign_goods_arrived', requirements: ['id' => Requirement::UUID], methods: ['POST'])]
+    public function goodsArrived(string $id, GoodsArrivalService $arrival, #[CurrentUser] User $user): JsonResponse
+    {
+        return ApiResponse::ok($arrival->markArrived($this->find($id), $user));
     }
 
     private function find(string $id): Campaign

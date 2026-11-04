@@ -66,6 +66,14 @@ class Delivery
         return $this->mode;
     }
 
+    /** Il cliente può cambiare idea finché non ha pagato il saldo (US-06). */
+    public function setMode(DeliveryMode $mode): self
+    {
+        $this->mode = $mode;
+
+        return $this;
+    }
+
     public function getPickupPoint(): ?PickupPoint
     {
         return $this->pickupPoint;

@@ -19,6 +19,12 @@ const REGOLE = [
   { metodo: 'POST', da: /^\/campagne\/([0-9a-f-]{36})\/chiusura$/i, a: (m) => `/api/campaigns/${m[1]}/close` },
   { metodo: 'POST', da: /^\/admin\/gruppi\/([0-9a-f-]{36})\/annulla$/i, a: (m) => `/api/campaigns/${m[1]}/cancel` },
   { metodo: 'POST', da: /^\/campagne\/([0-9a-f-]{36})\/invia-fornitore$/i, a: (m) => `/api/campaigns/${m[1]}/send-to-supplier` },
+  { metodo: 'GET', da: /^\/consegne\/costo$/, a: () => '/api/deliveries/cost' },
+  { metodo: 'POST', da: /^\/consegne\/scelta$/, a: () => '/api/deliveries/choice' },
+  { metodo: 'POST', da: /^\/consegne\/([0-9a-f-]{36})\/conferma-ricezione$/i, a: (m) => `/api/deliveries/${m[1]}/confirm-receipt` },
+  { metodo: 'GET', da: /^\/mie\/assegnazioni\/([0-9a-f-]{36})\/qr$/i, a: (m) => `/api/participations/${m[1]}/pickup-qr` },
+  { metodo: 'POST', da: /^\/ritiro\/([^/]+)$/, a: (m) => `/api/pickups/${m[1]}/scan` },
+  { metodo: 'POST', da: /^\/admin\/gruppi\/([0-9a-f-]{36})\/merce-arrivata$/i, a: (m) => `/api/campaigns/${m[1]}/goods-arrived` },
   { metodo: 'POST', da: /^\/pagamento\/checkout$/, a: () => '/api/payments/balance-checkout' },
   { metodo: 'GET', da: /^\/pagamento\/stato$/, a: () => '/api/payments/status' },
 ];
