@@ -192,9 +192,30 @@ final class BalanceService
         $participation->setStatus(ParticipationStatus::Pagata)
             ->setPaidAt(new \DateTimeImmutable())
             ->setBalanceCents($paid->amountCents)
-            ->setCommissionCents($commission);
+            ->setCommissionCents($commission)
+            ->setBalanceDueAt(null);
 
         return PaymentOutcome::Completed;
+    }
+
+    /**
+     * Saldo pari a zero (o negativo: l'acconto copre già tutto): l'adesione è pagata senza addebitare nulla.
+     * Come nel legacy (saldo_completa con importo 0) l'eventuale eccedenza dell'acconto NON viene rimborsata.
+     */
+    public function completeWithoutCharge(Participation $participation): void
+    {
+        $commission = $this->breakdown($participation)->commissionCents;
+        $now = new \DateTimeImmutable();
+        $this->em->persist((new Payment($participation, PaymentType::Saldo, 0))
+            ->setAgencyCommissionCents($commission)
+            ->setStripeStatus('nessun_addebito')
+            ->setStatus(PaymentStatus::Confermato)
+            ->setConfirmedAt($now));
+        $participation->setStatus(ParticipationStatus::Pagata)
+            ->setPaidAt($now)
+            ->setBalanceCents(0)
+            ->setCommissionCents($commission)
+            ->setBalanceDueAt(null);
     }
 
     private function refund(PaymentIntentData $paid): void

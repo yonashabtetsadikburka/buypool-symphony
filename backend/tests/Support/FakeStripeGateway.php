@@ -5,6 +5,7 @@ namespace App\Tests\Support;
 use App\Payment\Gateway\CheckoutRequest;
 use App\Payment\Gateway\CheckoutSession;
 use App\Payment\Gateway\CheckoutSessionStatus;
+use App\Payment\Gateway\OffSessionCharge;
 use App\Payment\Gateway\PaymentIntentData;
 use App\Payment\Gateway\StripeGateway;
 use App\Payment\Gateway\StripeGatewayException;
@@ -26,6 +27,16 @@ final class FakeStripeGateway implements StripeGateway
     public array $sessionStatuses = [];
     /** @var array<string, PaymentIntentData> cosa "risponde Stripe" quando si rilegge un PaymentIntent */
     public array $paymentIntents = [];
+    /** @var list<OffSessionCharge> addebiti del saldo tentati */
+    public array $charges = [];
+    /** @var array<string, string> id adesione → codice d'errore con cui la banca rifiuta l'addebito */
+    public array $chargeFailures = [];
+    /** @var array<string, string> id adesione → stato del PaymentIntent restituito (default "succeeded") */
+    public array $chargeStatuses = [];
+    /** @var array<string, PaymentIntentData> "adesione|importo" → addebito già esistente su Stripe */
+    public array $existingBalanceIntents = [];
+    /** @var list<string> PaymentIntent il cui rimborso fallisce */
+    public array $failRefundOf = [];
     public bool $failRefunds = false;
     public bool $failCheckout = false;
     private int $sequence = 0;
@@ -66,6 +77,22 @@ final class FakeStripeGateway implements StripeGateway
         return $this->createDepositCheckout($request);
     }
 
+    public function chargeBalanceOffSession(OffSessionCharge $charge): PaymentIntentData
+    {
+        $this->charges[] = $charge;
+        $participationId = $charge->metadata['prenotazione_id'] ?? '';
+        if (isset($this->chargeFailures[$participationId])) {
+            throw new StripeGatewayException('Carta rifiutata.', stripeCode: $this->chargeFailures[$participationId], paymentIntentId: 'pi_failed_'.++$this->sequence);
+        }
+
+        return new PaymentIntentData('pi_charge_'.++$this->sequence, $charge->amountCents, $charge->paymentMethodId, $this->chargeStatuses[$participationId] ?? 'succeeded', $charge->metadata);
+    }
+
+    public function findBalanceIntent(string $customerId, string $participationId, int $amountCents): ?PaymentIntentData
+    {
+        return $this->existingBalanceIntents[$participationId.'|'.$amountCents] ?? null;
+    }
+
     public function retrieveCheckoutSession(string $sessionId): CheckoutSessionStatus
     {
         return $this->sessionStatuses[$sessionId] ?? throw new StripeGatewayException('Sessione sconosciuta.');
@@ -78,7 +105,7 @@ final class FakeStripeGateway implements StripeGateway
 
     public function refundPaymentIntent(string $paymentIntentId, string $idempotencyKey): void
     {
-        if ($this->failRefunds) {
+        if ($this->failRefunds || \in_array($paymentIntentId, $this->failRefundOf, true)) {
             throw new StripeGatewayException('Rimborso non riuscito.');
         }
         $this->refunds[$idempotencyKey] = $paymentIntentId;

@@ -11,6 +11,8 @@ parameters:
     # Valori del legacy: acconto_percent = 20, costo_spedizione = 4,90 (da confermare).
     app.pricing.deposit_percent: 20
     app.pricing.home_delivery_cents: 490
+    # Ore a disposizione del cliente per sistemare il pagamento dopo un saldo non riuscito (legacy: saldo_termine_ore = 48).
+    app.balance.payment_deadline_hours: 48
 
 services:
     # default configuration for services in *this* file
@@ -46,6 +48,18 @@ when@test:
             autowire: true
             public: true
         App\Participation\Service\BalanceService:
+            autowire: true
+            public: true
+        App\Participation\Service\BalanceExpiryService:
+            autowire: true
+            public: true
+        App\Campaign\Application\CampaignClosureService:
+            autowire: true
+            public: true
+        App\Campaign\Application\CampaignCancellationService:
+            autowire: true
+            public: true
+        App\Supplier\Service\SupplierOrderService:
             autowire: true
             public: true
 

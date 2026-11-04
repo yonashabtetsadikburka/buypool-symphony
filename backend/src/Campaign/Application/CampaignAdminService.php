@@ -268,7 +268,7 @@ final class CampaignAdminService
         return $campaign;
     }
 
-    private function actionsFor(Campaign $campaign, \DateTimeImmutable $now): CampaignActions
+    public function actionsFor(Campaign $campaign, \DateTimeImmutable $now): CampaignActions
     {
         $tiers = $this->sortedTiers($campaign);
 

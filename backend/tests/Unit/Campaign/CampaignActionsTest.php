@@ -42,6 +42,20 @@ final class CampaignActionsTest extends TestCase
         self::assertSame($delete, $actions->canDelete);
     }
 
+    public function testCancellationIsOnlyPossibleWhileOpenActiveOrToBeClosed(): void
+    {
+        $now = new \DateTimeImmutable(self::NOW);
+        $can = static fn (CampaignStatus $status, string $deadline, bool $reached, bool $closed): bool => CampaignActions::resolve($status, new \DateTimeImmutable($deadline), $reached, $closed, 3, $now)->canCancel;
+
+        self::assertTrue($can(CampaignStatus::InCorso, self::FUTURE, false, false));            // aperto
+        self::assertTrue($can(CampaignStatus::Riuscita, self::FUTURE, true, false));            // attivo
+        self::assertTrue($can(CampaignStatus::Riuscita, self::PAST, true, false));              // scaduto da chiudere
+        self::assertFalse($can(CampaignStatus::InCorso, self::PAST, false, false));             // non attivato
+        self::assertFalse($can(CampaignStatus::OrdinePronto, self::PAST, true, true));
+        self::assertFalse($can(CampaignStatus::OrdineFornitore, self::PAST, true, true));
+        self::assertFalse($can(CampaignStatus::Annullata, self::FUTURE, false, false));
+    }
+
     public function testDeadlineExactlyNowCountsAsExpired(): void
     {
         $actions = CampaignActions::resolve(CampaignStatus::InCorso, new \DateTimeImmutable(self::NOW), false, false, 0, new \DateTimeImmutable(self::NOW));

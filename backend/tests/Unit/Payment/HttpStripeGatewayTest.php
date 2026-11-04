@@ -4,6 +4,7 @@ namespace App\Tests\Unit\Payment;
 
 use App\Payment\Gateway\CheckoutRequest;
 use App\Payment\Gateway\HttpStripeGateway;
+use App\Payment\Gateway\OffSessionCharge;
 use App\Payment\Gateway\StripeGatewayException;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -100,6 +101,56 @@ final class HttpStripeGatewayTest extends TestCase
         self::assertSame(540, $intent->amountCents);
         self::assertSame('pm_1', $intent->paymentMethod);
         self::assertSame(['tipo' => 'saldo', 'n' => '3'], $intent->metadata);
+    }
+
+    public function testOffSessionChargeUsesTheSavedCardWithoutRedirectsAndTheAttemptKey(): void
+    {
+        $gateway = $this->gateway('sk_test_x', [new MockResponse('{"id":"pi_9","amount":2100,"status":"succeeded","payment_method":"pm_1","metadata":{"tipo":"saldo"}}')]);
+
+        $intent = $gateway->chargeBalanceOffSession(new OffSessionCharge('cus_1', 'pm_1', 2100, ['tipo' => 'saldo', 'prenotazione_id' => 'p1'], 'saldo_p1_2100_1'));
+
+        self::assertSame('pi_9', $intent->id);
+        self::assertSame('succeeded', $intent->status);
+        parse_str((string) $this->calls[0]['options']['body'], $body);
+        self::assertSame('2100', $body['amount']);
+        self::assertSame('eur', $body['currency']);
+        self::assertSame('cus_1', $body['customer']);
+        self::assertSame('pm_1', $body['payment_method']);
+        self::assertSame('true', $body['off_session']);
+        self::assertSame('true', $body['confirm']);
+        self::assertSame('never', $body['automatic_payment_methods']['allow_redirects']);
+        self::assertSame('p1', $body['metadata']['prenotazione_id']);
+        self::assertStringContainsString('Idempotency-Key: saldo_p1_2100_1', implode("\n", $this->calls[0]['options']['headers']));
+    }
+
+    public function testRefusedChargeCarriesTheBankCodeAndThePaymentIntentOfTheAttempt(): void
+    {
+        $json = '{"error":{"message":"Your card was declined.","code":"card_declined","payment_intent":{"id":"pi_failed"}}}';
+        $gateway = $this->gateway('sk_test_x', [new MockResponse($json, ['http_code' => 402])]);
+
+        try {
+            $gateway->chargeBalanceOffSession(new OffSessionCharge('cus_1', 'pm_1', 2100, [], 'k'));
+            self::fail('Doveva fallire.');
+        } catch (StripeGatewayException $e) {
+            self::assertSame('card_declined', $e->stripeCode);
+            self::assertSame('pi_failed', $e->paymentIntentId);
+        }
+    }
+
+    public function testExistingBalanceChargeIsFoundOnlyForTheSameParticipationAndAmount(): void
+    {
+        $list = json_encode(['data' => [
+            ['id' => 'pi_other', 'amount' => 2100, 'status' => 'succeeded', 'metadata' => ['tipo' => 'saldo', 'prenotazione_id' => 'altra']],
+            ['id' => 'pi_amount', 'amount' => 999, 'status' => 'succeeded', 'metadata' => ['tipo' => 'saldo', 'prenotazione_id' => 'p1']],
+            ['id' => 'pi_deposit', 'amount' => 2100, 'status' => 'succeeded', 'metadata' => ['tipo' => 'acconto', 'prenotazione_id' => 'p1']],
+            ['id' => 'pi_failed', 'amount' => 2100, 'status' => 'requires_payment_method', 'metadata' => ['tipo' => 'saldo', 'prenotazione_id' => 'p1']],
+            ['id' => 'pi_ok', 'amount' => 2100, 'status' => 'succeeded', 'metadata' => ['tipo' => 'saldo', 'prenotazione_id' => 'p1']],
+        ]], \JSON_THROW_ON_ERROR);
+        $gateway = $this->gateway('sk_test_x', [new MockResponse($list), new MockResponse($list), new MockResponse('{"data":[]}')]);
+
+        self::assertSame('pi_ok', $gateway->findBalanceIntent('cus_1', 'p1', 2100)?->id);
+        self::assertNull($gateway->findBalanceIntent('cus_1', 'p1', 5000));
+        self::assertNull($gateway->findBalanceIntent('cus_1', 'p1', 2100));
     }
 
     public function testOpenSessionsAreReadFromTheListAndIncompleteOnesSkipped(): void

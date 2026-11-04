@@ -65,6 +65,10 @@ class Campaign
     #[ORM\Column(nullable: true)]
     private ?int $finalPriceCents = null;
 
+    /** Motivo mostrato ai clienti quando il gruppo viene annullato (legacy: collette.motivo_annullamento). */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $cancellationReason = null;
+
     #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2, options: ['default' => '10.00'])]
     private string $commissionRate = '10.00';
 
@@ -270,6 +274,18 @@ class Campaign
         }
 
         $this->finalPriceCents = $finalPriceCents;
+
+        return $this;
+    }
+
+    public function getCancellationReason(): ?string
+    {
+        return $this->cancellationReason;
+    }
+
+    public function setCancellationReason(?string $cancellationReason): self
+    {
+        $this->cancellationReason = null === $cancellationReason ? null : mb_substr($cancellationReason, 0, 255);
 
         return $this;
     }

@@ -46,6 +46,8 @@ security:
         - { path: ^/api/auth/me$, roles: IS_AUTHENTICATED_FULLY }
         # Adesione diretta senza pagamento: disabilitata (410) per chiunque, anche ospiti.
         - { path: ^/api/campaigns/[^/]+/join$, roles: PUBLIC_ACCESS }
+        # Chiusura, annullamento e invio al fornitore: solo admin.
+        - { path: ^/api/campaigns/[^/]+/(close|cancel|send-to-supplier)$, methods: [POST], roles: ROLE_ADMIN }
         # Elenco e dettaglio dei gruppi sono pubblici (GET); creare, modificare ed eliminare è solo dell'admin.
         - { path: ^/api/campaigns(/[^/]+)?$, methods: [POST, PATCH, PUT, DELETE], roles: ROLE_ADMIN }
         # Webhook di Stripe: nessun login, la richiesta è autenticata dalla firma (Stripe-Signature).
