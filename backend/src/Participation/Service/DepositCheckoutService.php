@@ -11,9 +11,10 @@ use App\Delivery\Repository\PickupPointRepository;
 use App\Identity\Entity\User;
 use App\Participation\Repository\ParticipationRepository;
 use App\Payment\Gateway\CheckoutSession;
-use App\Payment\Gateway\DepositCheckoutRequest;
+use App\Payment\Gateway\CheckoutRequest;
 use App\Payment\Gateway\StripeGateway;
 use App\Payment\Gateway\StripeGatewayException;
+use App\Payment\Service\StripeCustomerProvider;
 use App\Pricing\Exception\DepositBelowMinimumException;
 use App\Pricing\PricingCalculator;
 use App\Shared\Http\ApiError;
@@ -36,6 +37,7 @@ final class DepositCheckoutService
         private readonly PickupPointRepository $pickupPoints,
         private readonly PricingCalculator $pricing,
         private readonly StripeGateway $stripe,
+        private readonly StripeCustomerProvider $customers,
         #[Autowire(env: 'FRONTEND_URL')]
         private readonly string $frontendUrl,
     ) {
@@ -83,8 +85,8 @@ final class DepositCheckoutService
         ];
 
         try {
-            $customerId = $this->customerId($user);
-            $session = $this->createOrReuse($customerId, $userId, $campaignId, $metadata, $deposit, new DepositCheckoutRequest(
+            $customerId = $this->customers->customerIdFor($user);
+            $session = $this->createOrReuse($customerId, $userId, $campaignId, $metadata, $deposit, new CheckoutRequest(
                 customerId: $customerId,
                 productName: \sprintf('Acconto %s — %d unità', $campaign->getProduct()->getName(), $quantity),
                 description: 'Acconto gruppo '.$campaignId,
@@ -107,7 +109,7 @@ final class DepositCheckoutService
      *
      * @param array<string, string> $metadata
      */
-    private function createOrReuse(string $customerId, string $userId, string $campaignId, array $metadata, int $amountCents, DepositCheckoutRequest $request): CheckoutSession
+    private function createOrReuse(string $customerId, string $userId, string $campaignId, array $metadata, int $amountCents, CheckoutRequest $request): CheckoutSession
     {
         $connection = $this->em->getConnection();
         $lockName = 'bp_co_'.md5($userId.'_'.$campaignId);
@@ -135,18 +137,6 @@ final class DepositCheckoutService
         } finally {
             $connection->fetchOne('SELECT RELEASE_LOCK(?)', [$lockName]);
         }
-    }
-
-    private function customerId(User $user): string
-    {
-        $customerId = $user->getStripeCustomerId();
-        if (null === $customerId || '' === $customerId) {
-            $customerId = $this->stripe->createCustomer($user->getEmail(), $user->getId()->toRfc4122());
-            $user->setStripeCustomerId($customerId);
-            $this->em->flush();
-        }
-
-        return $customerId;
     }
 
     private function findCampaign(mixed $id): Campaign

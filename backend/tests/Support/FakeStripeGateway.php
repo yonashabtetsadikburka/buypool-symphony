@@ -2,8 +2,10 @@
 
 namespace App\Tests\Support;
 
+use App\Payment\Gateway\CheckoutRequest;
 use App\Payment\Gateway\CheckoutSession;
-use App\Payment\Gateway\DepositCheckoutRequest;
+use App\Payment\Gateway\CheckoutSessionStatus;
+use App\Payment\Gateway\PaymentIntentData;
 use App\Payment\Gateway\StripeGateway;
 use App\Payment\Gateway\StripeGatewayException;
 
@@ -16,10 +18,14 @@ final class FakeStripeGateway implements StripeGateway
     public array $openSessions = [];
     /** @var list<string> */
     public array $expired = [];
-    /** @var list<DepositCheckoutRequest> */
+    /** @var list<CheckoutRequest> */
     public array $checkoutRequests = [];
     /** @var array<string, string> chiave di idempotenza → id del pagamento rimborsato */
     public array $refunds = [];
+    /** @var array<string, CheckoutSessionStatus> cosa "risponde Stripe" quando si rilegge una sessione */
+    public array $sessionStatuses = [];
+    /** @var array<string, PaymentIntentData> cosa "risponde Stripe" quando si rilegge un PaymentIntent */
+    public array $paymentIntents = [];
     public bool $failRefunds = false;
     public bool $failCheckout = false;
     private int $sequence = 0;
@@ -42,7 +48,7 @@ final class FakeStripeGateway implements StripeGateway
         unset($this->openSessions[$sessionId]);
     }
 
-    public function createDepositCheckout(DepositCheckoutRequest $request): CheckoutSession
+    public function createDepositCheckout(CheckoutRequest $request): CheckoutSession
     {
         if ($this->failCheckout) {
             throw new StripeGatewayException('Carta rifiutata.');
@@ -53,6 +59,21 @@ final class FakeStripeGateway implements StripeGateway
         $this->openSessions[$id] = $session;
 
         return $session;
+    }
+
+    public function createBalanceCheckout(CheckoutRequest $request): CheckoutSession
+    {
+        return $this->createDepositCheckout($request);
+    }
+
+    public function retrieveCheckoutSession(string $sessionId): CheckoutSessionStatus
+    {
+        return $this->sessionStatuses[$sessionId] ?? throw new StripeGatewayException('Sessione sconosciuta.');
+    }
+
+    public function retrievePaymentIntent(string $paymentIntentId): PaymentIntentData
+    {
+        return $this->paymentIntents[$paymentIntentId] ?? throw new StripeGatewayException('PaymentIntent sconosciuto.');
     }
 
     public function refundPaymentIntent(string $paymentIntentId, string $idempotencyKey): void

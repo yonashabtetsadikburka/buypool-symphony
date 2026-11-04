@@ -49,15 +49,15 @@ final class DepositConfirmationService
      * Se il rimborso di un pagamento in più non riesce lancia l'eccezione del gateway: l'evento non va chiuso,
      * Stripe lo ripete e il pagamento non si perde.
      */
-    public function confirm(PaidDeposit $paid): DepositOutcome
+    public function confirm(PaidDeposit $paid): PaymentOutcome
     {
-        return $this->transaction->run(fn (): DepositOutcome => $this->doConfirm($paid));
+        return $this->transaction->run(fn (): PaymentOutcome => $this->doConfirm($paid));
     }
 
-    private function doConfirm(PaidDeposit $paid): DepositOutcome
+    private function doConfirm(PaidDeposit $paid): PaymentOutcome
     {
         if (null !== $this->payments->findOneBy(['stripePaymentIntentId' => $paid->paymentIntentId])) {
-            return DepositOutcome::AlreadyHandled;
+            return PaymentOutcome::AlreadyHandled;
         }
 
         $meta = $paid->metadata;
@@ -67,7 +67,7 @@ final class DepositConfirmationService
         if (null === $mode || !Uuid::isValid($campaignId) || !Uuid::isValid($userId)) {
             $this->logger->warning('Acconto senza metadati validi', ['payment_intent' => $paid->paymentIntentId]);
 
-            return DepositOutcome::Ignored;
+            return PaymentOutcome::Ignored;
         }
 
         // Il gruppo resta bloccato fino alla fine: due acconti contemporanei non si pestano i piedi.
@@ -76,7 +76,7 @@ final class DepositConfirmationService
         if (!$campaign instanceof Campaign || !$user instanceof User) {
             $this->logger->warning('Acconto per gruppo o utente inesistente', ['payment_intent' => $paid->paymentIntentId]);
 
-            return DepositOutcome::Ignored;
+            return PaymentOutcome::Ignored;
         }
 
         $quantity = max(1, (int) ($meta['quantita'] ?? 1));
@@ -95,7 +95,7 @@ final class DepositConfirmationService
             }
             $this->logger->info('Acconto in più rimborsato', ['payment_intent' => $paid->paymentIntentId, 'motivo' => $duplicate ? 'duplicato' : 'non_attivo']);
 
-            return DepositOutcome::Refunded;
+            return PaymentOutcome::Refunded;
         }
 
         // Se il gruppo ha già raggiunto il minimo l'adesione nasce "confermata": la chiusura addebita solo le confermate.
@@ -121,7 +121,7 @@ final class DepositConfirmationService
             $this->confirmReservedParticipations($campaign, $participation);
         }
 
-        return DepositOutcome::Created;
+        return PaymentOutcome::Created;
     }
 
     /** Il gruppo ha appena raggiunto il minimo: le adesioni "prenotata" diventano "confermata". */

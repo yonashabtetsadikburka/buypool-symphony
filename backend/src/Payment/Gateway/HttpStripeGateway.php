@@ -47,7 +47,43 @@ final class HttpStripeGateway implements StripeGateway
         $this->call('POST', '/checkout/sessions/'.rawurlencode($sessionId).'/expire');
     }
 
-    public function createDepositCheckout(DepositCheckoutRequest $request): CheckoutSession
+    public function createDepositCheckout(CheckoutRequest $request): CheckoutSession
+    {
+        // L'acconto autorizza anche il saldo futuro senza il cliente.
+        return $this->createCheckout($request, ['setup_future_usage' => 'off_session']);
+    }
+
+    public function createBalanceCheckout(CheckoutRequest $request): CheckoutSession
+    {
+        return $this->createCheckout($request, []);
+    }
+
+    public function retrieveCheckoutSession(string $sessionId): CheckoutSessionStatus
+    {
+        $data = $this->call('GET', '/checkout/sessions/'.rawurlencode($sessionId));
+        $intent = $data['payment_intent'] ?? '';
+        if (\is_array($intent)) {
+            $intent = $intent['id'] ?? '';
+        }
+
+        return new CheckoutSessionStatus(
+            self::string($data['id'] ?? null),
+            \is_string($data['payment_status'] ?? null) ? $data['payment_status'] : 'unpaid',
+            \is_string($intent) ? $intent : '',
+            (int) ($data['amount_total'] ?? 0),
+            self::metadata($data['metadata'] ?? null),
+        );
+    }
+
+    public function retrievePaymentIntent(string $paymentIntentId): PaymentIntentData
+    {
+        return PaymentIntentData::fromStripeObject($this->call('GET', '/payment_intents/'.rawurlencode($paymentIntentId)));
+    }
+
+    /**
+     * @param array<string, string> $intentOptions opzioni extra del PaymentIntent
+     */
+    private function createCheckout(CheckoutRequest $request, array $intentOptions): CheckoutSession
     {
         $data = $this->call('POST', '/checkout/sessions', [
             'payment_method_types' => ['card'],
@@ -61,8 +97,8 @@ final class HttpStripeGateway implements StripeGateway
                 ],
                 'quantity' => 1,
             ]],
-            // L'acconto autorizza anche il saldo futuro senza il cliente.
-            'payment_intent_data' => ['setup_future_usage' => 'off_session', 'metadata' => $request->metadata],
+            // I metadati stanno anche sul PaymentIntent: è quello che arriva al webhook.
+            'payment_intent_data' => $intentOptions + ['metadata' => $request->metadata],
             'success_url' => $request->successUrl,
             'cancel_url' => $request->cancelUrl,
             'metadata' => $request->metadata,

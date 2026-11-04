@@ -20,7 +20,15 @@ interface StripeGateway
 
     public function expireCheckoutSession(string $sessionId): void;
 
-    public function createDepositCheckout(DepositCheckoutRequest $request): CheckoutSession;
+    /** Pagamento dell'acconto: autorizza anche l'addebito futuro del saldo senza il cliente. */
+    public function createDepositCheckout(CheckoutRequest $request): CheckoutSession;
+
+    /** Pagamento del saldo da parte del cliente. */
+    public function createBalanceCheckout(CheckoutRequest $request): CheckoutSession;
+
+    public function retrieveCheckoutSession(string $sessionId): CheckoutSessionStatus;
+
+    public function retrievePaymentIntent(string $paymentIntentId): PaymentIntentData;
 
     /** Rimborso totale di un pagamento. Un pagamento già rimborsato non è un errore. */
     public function refundPaymentIntent(string $paymentIntentId, string $idempotencyKey): void;
