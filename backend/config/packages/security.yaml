@@ -48,6 +48,11 @@ security:
         - { path: ^/api/campaigns/[^/]+/join$, roles: PUBLIC_ACCESS }
         # Chiusura, annullamento e invio al fornitore: solo admin.
         - { path: ^/api/campaigns/[^/]+/(close|cancel|send-to-supplier|goods-arrived)$, methods: [POST], roles: ROLE_ADMIN }
+        # Invito fornitore: verifica e attivazione sono pubbliche (si entra col link); l'invito lo genera l'admin.
+        - { path: ^/api/suppliers/(invite/[^/]+|activate)$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/admin/, roles: ROLE_ADMIN }
+        # Area fornitore: solo il fornitore (vede e tocca solo i propri ordini).
+        - { path: ^/api/supplier/, roles: ROLE_FORNITORE }
         # Scansione del QR di ritiro: solo admin.
         - { path: ^/api/pickups/, roles: ROLE_ADMIN }
         # Consegna, QR e conferma di ricezione: serve un utente collegato.

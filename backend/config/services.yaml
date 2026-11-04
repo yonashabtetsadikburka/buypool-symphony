@@ -13,6 +13,8 @@ parameters:
     app.pricing.home_delivery_cents: 490
     # Ore a disposizione del cliente per sistemare il pagamento dopo un saldo non riuscito (legacy: saldo_termine_ore = 48).
     app.balance.payment_deadline_hours: 48
+    # Ore a disposizione del fornitore per confermare un ordine arrivato (legacy: fornitore_conferma_ore = 72).
+    app.supplier.confirmation_hours: 72
 
 services:
     # default configuration for services in *this* file

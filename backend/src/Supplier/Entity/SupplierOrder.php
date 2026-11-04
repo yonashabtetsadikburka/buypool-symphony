@@ -50,6 +50,19 @@ class SupplierOrder
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $deliveredAt = null;
 
+    /** Quando il fornitore ha confermato l'ordine ("Da confermare" → "In preparazione"). */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $confirmedAt = null;
+
+    #[ORM\Column(length: 40, nullable: true)]
+    private ?string $carrier = null;
+
+    #[ORM\Column(length: 40, nullable: true)]
+    private ?string $trackingNumber = null;
+
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $shippedOn = null;
+
     #[ORM\Column(length: 20)]
     private string $orderNumber;
 
@@ -165,6 +178,42 @@ class SupplierOrder
     public function setDeliveredAt(?\DateTimeImmutable $deliveredAt): self
     {
         $this->deliveredAt = $deliveredAt;
+
+        return $this;
+    }
+
+    public function getConfirmedAt(): ?\DateTimeImmutable
+    {
+        return $this->confirmedAt;
+    }
+
+    public function setConfirmedAt(?\DateTimeImmutable $confirmedAt): self
+    {
+        $this->confirmedAt = $confirmedAt;
+
+        return $this;
+    }
+
+    public function getCarrier(): ?string
+    {
+        return $this->carrier;
+    }
+
+    public function getTrackingNumber(): ?string
+    {
+        return $this->trackingNumber;
+    }
+
+    public function getShippedOn(): ?\DateTimeImmutable
+    {
+        return $this->shippedOn;
+    }
+
+    public function setShipment(string $carrier, string $trackingNumber, \DateTimeImmutable $shippedOn): self
+    {
+        $this->carrier = $carrier;
+        $this->trackingNumber = $trackingNumber;
+        $this->shippedOn = $shippedOn;
 
         return $this;
     }

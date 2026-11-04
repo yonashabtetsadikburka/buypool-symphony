@@ -25,6 +25,12 @@ const REGOLE = [
   { metodo: 'GET', da: /^\/mie\/assegnazioni\/([0-9a-f-]{36})\/qr$/i, a: (m) => `/api/participations/${m[1]}/pickup-qr` },
   { metodo: 'POST', da: /^\/ritiro\/([^/]+)$/, a: (m) => `/api/pickups/${m[1]}/scan` },
   { metodo: 'POST', da: /^\/admin\/gruppi\/([0-9a-f-]{36})\/merce-arrivata$/i, a: (m) => `/api/campaigns/${m[1]}/goods-arrived` },
+  { metodo: 'POST', da: /^\/admin\/fornitori\/([0-9a-f-]{36})\/invito$/i, a: (m) => `/api/admin/suppliers/${m[1]}/invite` },
+  { metodo: 'GET', da: /^\/fornitori\/invito\/([^/]+)$/, a: (m) => `/api/suppliers/invite/${m[1]}` },
+  { metodo: 'POST', da: /^\/fornitori\/attiva$/, a: () => '/api/suppliers/activate' },
+  { metodo: 'GET', da: /^\/fornitore\/ordini$/, a: () => '/api/supplier/orders' },
+  { metodo: 'POST', da: /^\/fornitore\/ordini\/([0-9a-f-]{36})\/conferma$/i, a: (m) => `/api/supplier/orders/${m[1]}/confirm` },
+  { metodo: 'POST', da: /^\/fornitore\/ordini\/([0-9a-f-]{36})\/spedisci$/i, a: (m) => `/api/supplier/orders/${m[1]}/ship` },
   { metodo: 'POST', da: /^\/pagamento\/checkout$/, a: () => '/api/payments/balance-checkout' },
   { metodo: 'GET', da: /^\/pagamento\/stato$/, a: () => '/api/payments/status' },
 ];
