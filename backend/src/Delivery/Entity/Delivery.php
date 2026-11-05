@@ -44,6 +44,12 @@ class Delivery
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $deliveredAt = null;
 
+    #[ORM\Column(length: 120, nullable: true)]
+    private ?string $trackingNumber = null;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $shippedAt = null;
+
     public function __construct(Participation $participation, DeliveryMode $mode)
     {
         $this->id = Uuid::v7();
@@ -146,6 +152,26 @@ class Delivery
     public function setDeliveredAt(?\DateTimeImmutable $deliveredAt): self
     {
         $this->deliveredAt = $deliveredAt;
+
+        return $this;
+    }
+
+    public function getTrackingNumber(): ?string
+    {
+        return $this->trackingNumber;
+    }
+
+    public function getShippedAt(): ?\DateTimeImmutable
+    {
+        return $this->shippedAt;
+    }
+
+    /** Spedizione a domicilio partita (US-20): stato "spedita", con il tracking se c'è. */
+    public function markShipped(?string $trackingNumber, \DateTimeImmutable $shippedAt): self
+    {
+        $this->status = DeliveryStatus::Spedita;
+        $this->trackingNumber = $trackingNumber;
+        $this->shippedAt = $shippedAt;
 
         return $this;
     }

@@ -276,6 +276,8 @@ final class PurchasesService
             'concluso' => 'ritirato' === $view,
             'spedizione' => $home,
             'consegna_modalita' => $delivery?->getMode()->value,
+            'tracking' => $delivery?->getTrackingNumber(),
+            'spedito_il' => $delivery?->getShippedAt()?->format(\DATE_ATOM),
             'chiusura_in_corso' => $closing,
             'acconto_cents' => $deposit,
             'acconto_percent' => (float) $this->settings->depositPercent,
