@@ -9,7 +9,7 @@ export function destinazioneAcquisti(vecchiaRotta, query) {
   const scheda = SCHEDA_DI_DEFAULT[vecchiaRotta];
   if (!scheda) return null;
   const q = new URLSearchParams(query);
-  const id = parseInt(q.get('id'));
-  const nuova = new URLSearchParams(id > 0 ? { id: String(id) } : { tab: scheda });
+  const id = q.get('id') || '';
+  const nuova = new URLSearchParams(id ? { id } : { tab: scheda });
   return `/acquisti?${nuova}`;
 }

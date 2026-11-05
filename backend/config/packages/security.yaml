@@ -63,6 +63,8 @@ security:
         - { path: ^/api/(me|catalog)/, roles: IS_AUTHENTICATED_FULLY }
         # Il mio profilo e il cambio password: serve un utente collegato.
         - { path: ^/api/profile(/|$), roles: IS_AUTHENTICATED_FULLY }
+        # Le mie notifiche: serve un utente collegato.
+        - { path: ^/api/notifications(/|$), roles: IS_AUTHENTICATED_FULLY }
         # Elenco e dettaglio dei gruppi sono pubblici (GET); creare, modificare ed eliminare è solo dell'admin.
         - { path: ^/api/campaigns(/[^/]+)?$, methods: [POST, PATCH, PUT, DELETE], roles: ROLE_ADMIN }
         # Webhook di Stripe: nessun login, la richiesta è autenticata dalla firma (Stripe-Signature).
