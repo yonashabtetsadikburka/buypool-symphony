@@ -31,6 +31,7 @@ const REGOLE = [
   { metodo: 'GET', da: /^\/fornitore\/ordini$/, a: () => '/api/supplier/orders' },
   { metodo: 'POST', da: /^\/fornitore\/ordini\/([0-9a-f-]{36})\/conferma$/i, a: (m) => `/api/supplier/orders/${m[1]}/confirm` },
   { metodo: 'POST', da: /^\/fornitore\/ordini\/([0-9a-f-]{36})\/spedisci$/i, a: (m) => `/api/supplier/orders/${m[1]}/ship` },
+  { metodo: 'DELETE', da: /^\/campagne\/([0-9a-f-]{36})\/partecipazioni$/i, a: (m) => `/api/campaigns/${m[1]}/participation` },
   { metodo: 'POST', da: /^\/pagamento\/checkout$/, a: () => '/api/payments/balance-checkout' },
   { metodo: 'GET', da: /^\/pagamento\/stato$/, a: () => '/api/payments/status' },
 ];
