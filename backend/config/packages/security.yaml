@@ -53,6 +53,8 @@ security:
         - { path: ^/api/admin/, roles: ROLE_ADMIN }
         # Area fornitore: solo il fornitore (vede e tocca solo i propri ordini).
         - { path: ^/api/supplier/, roles: ROLE_FORNITORE }
+        # Ritiro della propria adesione: serve un utente collegato.
+        - { path: ^/api/campaigns/[^/]+/participation$, roles: IS_AUTHENTICATED_FULLY }
         # Scansione del QR di ritiro: solo admin.
         - { path: ^/api/pickups/, roles: ROLE_ADMIN }
         # Consegna, QR e conferma di ricezione: serve un utente collegato.

@@ -4,6 +4,7 @@ namespace App\Participation\Controller;
 
 use App\Identity\Entity\User;
 use App\Participation\Service\DepositCheckoutService;
+use App\Participation\Service\WithdrawalService;
 use App\Shared\Http\ApiError;
 use App\Shared\Http\ApiResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -29,5 +30,15 @@ final class ParticipationController
     public function depositCheckout(Request $request, DepositCheckoutService $service, #[CurrentUser] User $user): JsonResponse
     {
         return ApiResponse::ok($service->createCheckout($user, ApiResponse::body($request)));
+    }
+
+    /**
+     * Il cliente ritira la propria adesione: solo prima della scadenza e finché il gruppo è sotto il minimo.
+     * L'acconto viene rimborsato e le unità tornano disponibili.
+     */
+    #[Route('/api/campaigns/{id}/participation', name: 'api_campaign_withdraw', requirements: ['id' => Requirement::UUID], methods: ['DELETE'])]
+    public function withdraw(string $id, WithdrawalService $service, #[CurrentUser] User $user): JsonResponse
+    {
+        return ApiResponse::ok($service->withdraw($user, $id));
     }
 }
