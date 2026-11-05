@@ -50,7 +50,7 @@ Le issue sono le US di `docs/01-analysis/user-stories.md` (milestone GitHub: MV1
 | Proposte e voto | `proposte.php` (345), `admin_proposte.php` (379), `lib/proposte_regole.php` | `Proposal\…` | da fare | US-13, US-14 |
 | Recensioni | `recensioni.php` (208) | `Review` (entity nuova, non c'è) | da fare | US-18 |
 | Sospensione utenti, admin utenti/fornitori/messaggi | `admin_messaggi.php`, `utenti.php` | `Admin\UserAdminController` | da fare | US-19, US-23 |
-| Notifiche in-app | `notifiche.php`, `lib/notifiche_eventi.php` (823) | `Notification\Service\NotificationService` | solo creazione notifica in-app (ricevuta, ritiro, merce pronta); elenco, lettura ed email da fare | US-09, US-23 |
+| Notifiche in-app | `notifiche.php`, `lib/notifiche_eventi.php` (823) | `Notification\Service\NotificationService` (creazione), `NotificationInboxService` + `NotificationController` (`/api/notifications`: elenco, non lette, segna letta, segna tutte) | creazione (ricevuta, ritiro, merce pronta, acconto, minimo raggiunto, prezzo sceso, rimborso) e lettura da parte del cliente fatte; email, notifiche admin e promemoria a scadenza da fare | US-09, US-23, US-25 |
 | Email | `lib/mail.php` (214, PHPMailer) | Symfony Mailer + Messenger | da fare | vari |
 | Impostazioni | `lib/impostazioni.php` | parametri `config/services.yaml` (ore saldo, spedizione, acconto %) | da fare | US-06 |
 | Cron | `lib/cron.php` + `scripts/` (non copiati) | comando `app:campaigns:run-scheduled` (`Campaign\Command\CloseExpiredCampaignsCommand`), da lanciare ogni ora con cron o con l'Utilità di pianificazione di Windows; Symfony Scheduler non è installato (servirebbe una dipendenza nuova) | fatto come comando | US-11 |

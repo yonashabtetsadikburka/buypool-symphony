@@ -23,7 +23,7 @@ function disegna() {
     if (pill) { window.location.hash = `#/fornitore/ordini?scheda=${pill.dataset.scheda}`; return; }
     const b = e.target.closest('[data-azione]');
     if (!b) return;
-    const o = dati.ordini.find(x => x.id === parseInt(b.dataset.id));
+    const o = dati.ordini.find(x => x.id === b.dataset.id);
     if (!o) return;
     if (b.dataset.azione === 'conferma') apriConferma(o);
     if (b.dataset.azione === 'spedisci') apriSpedizione(o);

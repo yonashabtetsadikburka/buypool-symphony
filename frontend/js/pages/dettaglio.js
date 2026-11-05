@@ -832,7 +832,7 @@ async function caricaMiaAdesione(c) {
   if (!terminato || !mia || !mia.id) return null;
   try {
     const res = await apiGet(`/mie/acquisti?id=${encodeURIComponent(mia.id)}`);
-    return (res.dati?.acquisti || []).find(a => Number(a.id) === Number(mia.id)) || null;
+    return (res.dati?.acquisti || []).find(a => String(a.id) === String(mia.id)) || null;
   } catch (_) {
     return null;
   }

@@ -35,7 +35,7 @@ function urlScheda(k) { return k === 'tutte' ? '#/notifiche' : `#/notifiche?filt
 function rigaHtml(n) {
   const p = presenta(n);
   const c = CATEGORIE[p.categoria];
-  const id = Number(n.id);
+  const id = String(n.id);
   return `<li class="ntf-riga${p.letta ? '' : ' ntf-nonletta'}" data-id="${id}">
     <button type="button" class="ntf-main" data-apri="${id}" data-link="${esc(p.link)}">
       <span class="ntf-icona" style="background:${c.sfondo};color:${c.colore}" aria-hidden="true"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">${ICONE[p.categoria]}</svg></span>
@@ -77,7 +77,7 @@ function disegna() {
 }
 
 async function segnaLetta(id) {
-  const n = tutte.find(x => Number(x.id) === id);
+  const n = tutte.find(x => String(x.id) === id);
   if (!n || n.letta) return;
   try {
     await apiPut(`/notifiche/${id}/letta`, {});
@@ -105,7 +105,7 @@ function collegaEventi(root) {
     }
     const apri = e.target.closest('[data-apri]');
     if (!apri) return;
-    const id = parseInt(apri.dataset.apri);
+    const id = apri.dataset.apri;
     const link = apri.tagName === 'A' ? '' : (apri.dataset.link || '');
     if (apri.tagName === 'A') {
       segnaLetta(id); // il link naviga da solo

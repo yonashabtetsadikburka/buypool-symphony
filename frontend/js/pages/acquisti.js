@@ -45,7 +45,7 @@ const svg = (nome, dim = 18) =>
 let dati = null;
 let tab = '';          // '' = lascia scegliere al server
 let sort = '';
-let evidenzia = null;  // numero ordine da evidenziare (link da notifiche, redirect, ecc.)
+let evidenzia = null;  // id dell'adesione da evidenziare (link da notifiche, redirect, ecc.)
 let verifica = null;   // { sessionId, idAcquisto, attesa } dopo il ritorno da Stripe (aumento quantita')
 let metodoAggiornato = false;   // ritorno da Stripe dopo "Aggiorna il metodo di pagamento"
 let ascoltoAttivo = false;
@@ -56,7 +56,7 @@ function leggiParametri() {
   const s = q.get('sort');
   tab = TABS.some(([k]) => k === t) ? t : '';
   sort = s in ORDINAMENTI ? s : '';
-  evidenzia = parseInt(q.get('id')) || null;
+  evidenzia = q.get('id') || null; // UUID dell'adesione
   metodoAggiornato = q.get('metodo') === 'ok';
   const sessionId = q.get('session_id');
   const attesa = parseInt(q.get('attesa')) || 0;
@@ -493,7 +493,7 @@ export async function AcquistiPage() {
     if (pill) { cambiaTab(pill.dataset.tab); return; }
     const b = e.target.closest('[data-azione]');
     if (!b) return;
-    const a = trova(parseInt(b.dataset.id));
+    const a = trova(b.dataset.id);
     if (!a) return;
     if (b.dataset.azione === 'invita') invita(a, b);
     if (b.dataset.azione === 'annulla') annullaAdesione(a);

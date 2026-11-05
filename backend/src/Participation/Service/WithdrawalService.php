@@ -96,7 +96,7 @@ final class WithdrawalService
                     $user,
                     NotificationType::Rimborso,
                     'Adesione annullata',
-                    \sprintf('Hai annullato la tua adesione a "%s". Ti abbiamo rimborsato l\'acconto di %s €.', $campaign->getProduct()->getName(), number_format($refunded / 100, 2, ',', '.')),
+                    \sprintf('Hai annullato l\'adesione a "%s". Ti abbiamo rimborsato l\'acconto di €%s.',$campaign->getProduct()->getName(), number_format($refunded / 100, 2, ',', '.')),
                     ReferenceType::Colletta,
                     $campaign->getId()->toRfc4122(),
                 );

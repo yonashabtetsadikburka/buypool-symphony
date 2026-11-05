@@ -47,7 +47,7 @@ function problemiHtml(o) {
 }
 
 function azioniHtml(o) {
-  const id = Number(o.id);
+  const id = esc(o.id);
   const b = [];
   if (o.azioni.includes('conferma')) b.push(`<button type="button" class="adm-btn adm-btn-pri" data-azione="conferma" data-id="${id}">Conferma ordine</button>`);
   if (o.azioni.includes('spedisci')) b.push(`<button type="button" class="adm-btn adm-btn-pri" data-azione="spedisci" data-id="${id}">Segna come spedito</button>`);
@@ -56,8 +56,8 @@ function azioniHtml(o) {
 }
 
 export function ordineCardHtml(o, consegna, ora) {
-  return `<article class="adm-card adm-sezione frn-ordine" id="ord-${Number(o.id)}" data-ordine="${Number(o.id)}">
-    <div class="adm-ordine-testa"><div><h2 class="adm-h3"><a class="frn-titolo-link" href="#/fornitore/gruppi/${Number(o.id_colletta)}">${esc(o.prodotto)}</a></h2>
+  return `<article class="adm-card adm-sezione frn-ordine" id="ord-${esc(o.id)}" data-ordine="${esc(o.id)}">
+    <div class="adm-ordine-testa"><div><h2 class="adm-h3"><a class="frn-titolo-link" href="#/fornitore/gruppi/${esc(o.id_colletta)}">${esc(o.prodotto)}</a></h2>
       <span class="adm-sub">Ordine n. ${esc(o.numero)}${o.data_ordine ? ` · arrivato il ${esc(giorno(o.data_ordine))}` : ''}</span></div>${chipHtml(o)}</div>
     <dl class="adm-dati">
       <div><dt>Pezzi</dt><dd>${esc(pezzi(o.quantita_ordinata))}</dd></div>

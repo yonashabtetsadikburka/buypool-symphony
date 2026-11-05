@@ -68,8 +68,8 @@ final class ThresholdNotificationsTest extends KernelTestCase
         self::assertCount(1, $confirmed);
         self::assertSame('Acconto addebitato', $confirmed[0]->getTitle());
         // Stima del saldo: 3 × 9,00 = 27,00 + commissione 2,70 − acconto 5,40 = 24,30.
-        self::assertStringContainsString('5,40 € per Prodotto soglie 1 (3 unità)', $confirmed[0]->getMessage());
-        self::assertStringContainsString('24,30 €', $confirmed[0]->getMessage());
+        self::assertStringContainsString('€5,40 per Prodotto soglie 1 (3 unità)', $confirmed[0]->getMessage());
+        self::assertStringContainsString('€24,30', $confirmed[0]->getMessage());
         self::assertSame([], $this->notificationsOf($buyer, NotificationType::MoqRaggiunto));
         self::assertSame([], $this->notificationsOf($buyer, NotificationType::NuovoScaglione));
     }
@@ -122,7 +122,7 @@ final class ThresholdNotificationsTest extends KernelTestCase
             $found = $this->notificationsOf($recipient, NotificationType::NuovoScaglione);
             self::assertCount(1, $found);
             self::assertSame('Il prezzo è sceso', $found[0]->getTitle());
-            self::assertStringContainsString('ora costa 8,00 €', $found[0]->getMessage());
+            self::assertStringContainsString('ora costa €8,00', $found[0]->getMessage());
             self::assertStringContainsString('20 unità', $found[0]->getMessage());
         }
         self::assertSame([], $this->notificationsOf($early->getUser(), NotificationType::MoqRaggiunto));
