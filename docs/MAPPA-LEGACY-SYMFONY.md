@@ -32,7 +32,7 @@ Le issue sono le US di `docs/01-analysis/user-stories.md` (milestone GitHub: MV1
 | Google OAuth | `lib/oauth.php` (503), `endpoints/oauth.php` | `POST /api/auth/google` (token dal client, non redirect): `Identity\Google\TokenInfoGoogleIdTokenVerifier`, `GoogleLoginService`, `ExternalIdentity` | fatto | US-03 |
 | Microsoft OAuth | `lib/oauth.php` | idem, verifica token | da fare | US-24 |
 | Reset password | `endpoints/password.php` (157) | `PasswordResetToken` + Messenger/Mailer | da fare | US-17 |
-| Profilo | `endpoints/profilo.php` (184) | `ProfileController` | da fare | US-22 |
+| Profilo | `endpoints/profilo.php` (184) | `ProfileController`, `ProfileService` (`GET/PUT /api/profile`, `POST /api/profile/password`) | fatto per lettura, aggiornamento e password (US-22); export e cancellazione da fare in US-15/16 | US-22, US-15, US-16 |
 | Export dati / cancellazione account | `endpoints/utenti.php` (266) | `PrivacyController` | da fare | US-15, US-16 |
 | Lista e dettaglio gruppi | `endpoints/campagne.php` (1763, parte lettura) | `Campaign\Controller\CampaignController` (`GET /api/campaigns`, `/api/campaigns/{id}`), `CampaignPresenter`, `CampaignDisplayStatus`; importi in centesimi, sola lettura | fatto | US-01 |
 | Crea, modifica, elimina gruppi (admin) | `campagne.php` (`campagne_crea`, `campagne_modifica`, `campagne_elimina`, `valida_scaglioni`), `lib/gruppi_regole.php`, `lib/stato_lavoro.php` | `Campaign\Controller\CampaignAdminController` (`POST /api/campaigns`, `PATCH`/`DELETE /api/campaigns/{id}`), `Campaign\Application\CampaignAdminService`, `CampaignActions` | fatto (senza bozze e foto) | US-10 |
