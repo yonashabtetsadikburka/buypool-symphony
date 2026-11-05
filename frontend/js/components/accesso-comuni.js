@@ -1,6 +1,6 @@
 // Parti condivise da Accedi e Registrati: icone, riquadro errore, errori per campo, occhio password, Google/Microsoft.
-import { API_URL } from '../constants.js';
-import { ritornoDaHash } from '../ritorno.js';
+import { GOOGLE_CLIENT_ID } from '../constants.js';
+import { loginConGoogle, landingPerRuolo } from '../auth.js';
 
 export const ICONA_OCCHIO = '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>';
 export const ICONA_OCCHIO_BARRATO = '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>';
@@ -83,13 +83,79 @@ export function mostraErroreOauthDaHash() {
   if (codice) mostraErrore(MESSAGGI_OAUTH[codice] || MESSAGGIO_OAUTH_GENERICO);
 }
 
-/** Va al provider passando dal server. La pagina di ritorno resta nella sessione del server, non nell'URL del provider. */
-function avviaOauth(provider) {
+/** Messaggi per i codici d'errore del server su POST /api/auth/google. */
+const MESSAGGI_GOOGLE = {
+  EMAIL_MANCANTE: MESSAGGI_OAUTH.email_mancante,
+  EMAIL_NON_VERIFICATA: MESSAGGI_OAUTH.email_non_verificata,
+  UTENTE_SOSPESO: MESSAGGI_OAUTH.sospeso,
+  NON_COLLEGABILE: MESSAGGI_OAUTH.non_collegabile,
+  EMAIL_GIA_USATA: 'Questa email è già registrata. Accedi con email e password o reimposta la password.',
+  TOKEN_NON_VALIDO: MESSAGGI_OAUTH.stato_non_valido,
+};
+
+/** Dati del primo accesso che la pagina Registrati ha già raccolto (privacy, tipo di cliente); in Accedi non ci sono. */
+function datiPrimoAccesso() {
+  const privacy = document.getElementById('reg-privacy');
+  if (!privacy) return {};
+  const tipo = document.querySelector('input[name="tipo"]:checked')?.value;
+  const campo = (nome) => document.querySelector(`[name="${nome}"]`)?.value?.trim() || undefined;
+  return { privacy: privacy.checked ? 1 : 0, tipo, ragione_sociale: campo('ragione_sociale'), partita_iva: campo('partita_iva') };
+}
+
+async function accessoGoogle(idToken) {
   nascondiErrore();
-  let ritorno = ritornoDaHash();
-  if (!ritorno) { try { ritorno = sessionStorage.getItem('postLoginHash'); } catch (e) {} }
-  const query = ritorno ? `?ritorno=${encodeURIComponent(ritorno)}` : '';
-  window.location.href = `${API_URL}/auth/${provider}/start${query}`;
+  const dati = datiPrimoAccesso();
+  try {
+    const user = await loginConGoogle(idToken, dati);
+    window.location.href = landingPerRuolo(user);
+  } catch (err) {
+    if (err.codice === 'PRIVACY_NON_ACCETTATA') {
+      mostraErrore('privacy' in dati
+        ? "Per creare l'account con Google accetta prima l'informativa privacy qui sotto."
+        : 'Non hai ancora un account: vai su Registrati e crea l\'account con Google accettando l\'informativa privacy.');
+    } else if (err.codice === 'DATI_NON_VALIDI' && err.campi) {
+      mostraErrore(Object.values(err.campi).join(' '));
+    } else {
+      mostraErrore(MESSAGGI_GOOGLE[err.codice] || MESSAGGIO_OAUTH_GENERICO);
+    }
+  }
+}
+
+let scriptGoogle = null;
+function caricaGoogle() {
+  if (window.google?.accounts?.id) return Promise.resolve();
+  scriptGoogle ??= new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.onload = resolve;
+    s.onerror = () => { scriptGoogle = null; reject(new Error('Google non raggiungibile')); };
+    document.head.appendChild(s);
+  });
+  return scriptGoogle;
+}
+
+/** Sostituisce il pulsante con quello ufficiale di Google (Google Identity Services): restituisce l'idToken al browser. */
+async function montaGoogle(btn) {
+  const testo = btn.querySelector('span')?.textContent.startsWith('Registrati') ? 'signup_with' : 'signin_with';
+  try {
+    await caricaGoogle();
+  } catch (_) {
+    return; // senza Google il pulsante resta e al clic spiega il problema
+  }
+  const box = document.createElement('div');
+  box.id = 'btn-google-box';
+  box.className = 'acc-oauth-google';
+  btn.replaceWith(box);
+  window.google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: (risposta) => accessoGoogle(risposta.credential),
+    ux_mode: 'popup',
+  });
+  window.google.accounts.id.renderButton(box, {
+    type: 'standard', theme: 'outline', size: 'large', text: testo, shape: 'rectangular', locale: 'it',
+    width: Math.min(400, Math.max(200, Math.round(box.parentElement.clientWidth || 320))),
+  });
 }
 
 /** I due pulsanti OAuth, uno sotto l'altro. `verbo`: "Accedi" o "Registrati". */
@@ -102,8 +168,13 @@ export function oauthHtml(verbo) {
 }
 
 export function collegaOauth() {
-  document.getElementById('btn-google').addEventListener('click', () => avviaOauth('google'));
-  document.getElementById('btn-microsoft').addEventListener('click', () => avviaOauth('microsoft'));
+  const google = document.getElementById('btn-google');
+  const microsoft = document.getElementById('btn-microsoft');
+  const nonDisponibile = () => mostraErrore(MESSAGGI_OAUTH.non_configurato);
+  google.addEventListener('click', nonDisponibile); // vale solo se Google non è configurato o non si carica
+  if (GOOGLE_CLIENT_ID) montaGoogle(google);
+  // Microsoft non è ancora migrato nella nuova versione.
+  microsoft.addEventListener('click', nonDisponibile);
 }
 
 /** Campo con etichetta, input e messaggio d'errore (aria-live). `attrs`: attributi dell'input. */

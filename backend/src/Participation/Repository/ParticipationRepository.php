@@ -70,6 +70,31 @@ class ParticipationRepository extends ServiceEntityRepository
         return $found;
     }
 
+    /**
+     * Tutte le adesioni dell'utente (le più recenti per prime, al massimo 500 come nel legacy), con gruppo,
+     * prodotto e fornitore già caricati: la lista "I miei acquisti" non fa una query per riga.
+     *
+     * @return list<Participation>
+     */
+    public function findForUserWithCampaign(User $user): array
+    {
+        /** @var list<Participation> $found */
+        $found = $this->createQueryBuilder('p')
+            ->addSelect('c', 'pr', 's')
+            ->join('p.campaign', 'c')
+            ->join('c.product', 'pr')
+            ->join('pr.supplier', 's')
+            ->where('p.user = :user')
+            ->setParameter('user', $user->getId(), 'uuid')
+            ->orderBy('p.createdAt', 'DESC')
+            ->addOrderBy('p.id', 'DESC')
+            ->setMaxResults(500)
+            ->getQuery()
+            ->getResult();
+
+        return $found;
+    }
+
     public function findOneByCampaignAndUser(Campaign $campaign, User $user): ?Participation
     {
         return $this->findOneBy(['campaign' => $campaign, 'user' => $user]);

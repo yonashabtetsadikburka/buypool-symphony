@@ -1,6 +1,13 @@
 // Backend Symfony (php -S localhost:8000 -t public, da backend/). Il frontend gira su un'altra porta (vedi frontend/README.md).
 export const API_URL = 'http://localhost:8000';
 
+/**
+ * ID cliente OAuth di Google ("Applicazione web"), lo stesso valore di GOOGLE_CLIENT_ID in backend/.env.local.
+ * Non è un segreto (è pubblico per natura). Vuoto = accesso con Google non disponibile.
+ * In Google Cloud Console va aggiunta l'origine JavaScript autorizzata http://localhost:8080.
+ */
+export const GOOGLE_CLIENT_ID = '22127010556-mss3ikiiugra9aqv3im8m1jenn3jj8cd.apps.googleusercontent.com';
+
 /** Percentuale di acconto sul prezzo primo scaglione (solo presentazione: la logica di pagamento non la usa). */
 export const ACCONTO_PERCENT = 20;
 
