@@ -9,7 +9,11 @@ use App\Campaign\Enum\CampaignTransition;
 use App\Delivery\Entity\Delivery;
 use App\Delivery\Entity\PickupPoint;
 use App\Delivery\Enum\DeliveryMode;
+use App\Campaign\Entity\PriceTier;
 use App\Identity\Entity\User;
+use App\Notification\Enum\NotificationType;
+use App\Notification\Enum\ReferenceType;
+use App\Notification\Service\NotificationService;
 use App\Participation\Entity\Participation;
 use App\Participation\Enum\ParticipationStatus;
 use App\Participation\Repository\ParticipationRepository;
@@ -29,7 +33,10 @@ use Symfony\Component\Uid\Uuid;
  * Trasforma un acconto pagato in adesione (legacy: webhook_acconto_crea). Il chiamante è il webhook di Stripe
  * (US-07); qui non c'è HTTP. Idempotente sul PaymentIntent: lo stesso pagamento visto due volte non crea due adesioni.
  *
- * Le notifiche e le email al cliente e al fornitore arriveranno con le notifiche (US-09, US-23).
+ * Notifiche in-app (US-25, come il legacy): all'aderente "acconto addebitato"; a tutti gli aderenti e al fornitore "minimo
+ * raggiunto" quando il gruppo lo raggiunge adesso; a tutti gli aderenti "il prezzo è sceso" quando scatta un nuovo scaglione
+ * (dal secondo in poi). Scattano una volta sola perché il passaggio di soglia si vede sotto il blocco del gruppo.
+ * Le email arriveranno con la US-23.
  */
 final class DepositConfirmationService
 {
@@ -42,6 +49,7 @@ final class DepositConfirmationService
         private readonly CampaignTransitioner $transitioner,
         private readonly StripeGateway $stripe,
         private readonly LoggerInterface $logger,
+        private readonly NotificationService $notifications,
     ) {
     }
 
@@ -115,13 +123,127 @@ final class DepositConfirmationService
 
         $this->em->persist($this->paymentRow($participation, $paid, PaymentStatus::Confermato, $paid->stripeStatus));
 
-        $campaign->setCurrentQuantity($campaign->getCurrentQuantity() + $quantity);
+        $before = $campaign->getCurrentQuantity();
+        $campaign->setCurrentQuantity($before + $quantity);
+        $reachedMinimum = false;
         if (CampaignStatus::InCorso === $campaign->getStatus() && $campaign->getCurrentQuantity() >= $campaign->getMoq()) {
             $this->transitioner->apply($campaign, CampaignTransition::ReachMoq);
             $this->confirmReservedParticipations($campaign, $participation);
+            $reachedMinimum = true;
         }
 
+        $this->notifyDeposit($campaign, $participation, $mode, $before, $reachedMinimum);
+
         return PaymentOutcome::Created;
+    }
+
+    /**
+     * Acconto addebitato al cliente; se il gruppo ha appena raggiunto il minimo, avviso a tutti gli aderenti e al fornitore;
+     * se è scattato un nuovo scaglione (dal secondo in poi), "il prezzo è sceso" a tutti gli aderenti.
+     */
+    private function notifyDeposit(Campaign $campaign, Participation $participation, DeliveryMode $mode, int $before, bool $reachedMinimum): void
+    {
+        $tiers = $this->sortedTiers($campaign);
+        $name = $campaign->getProduct()->getName();
+        $campaignId = $campaign->getId()->toRfc4122();
+        $quantity = $participation->getQuantity();
+        $balance = $this->pricing->balance(
+            $quantity,
+            $this->pricing->estimatePrice($tiers, $campaign->getCurrentQuantity(), $campaign->getCurrentPriceCents()),
+            $campaign->getCommissionRate(),
+            $this->pricing->shipping($mode),
+            $participation->getDepositCents(),
+        );
+        $this->notifications->notify(
+            $participation->getUser(),
+            NotificationType::OrdineConfermato,
+            'Acconto addebitato',
+            \sprintf(
+                '%s per %s (%d unità). Il saldo di %s viene addebitato solo se il gruppo raggiunge il minimo.',
+                self::euro($participation->getDepositCents()),
+                $name,
+                $quantity,
+                self::euro(max(0, $balance->balanceCents)),
+            ),
+            ReferenceType::Colletta,
+            $campaignId,
+        );
+
+        $priorTier = $this->tierIndex($tiers, $before);
+        $newTier = $this->tierIndex($tiers, $campaign->getCurrentQuantity());
+        $newPrice = $newTier >= 1 && $newTier > $priorTier;
+        if (!$reachedMinimum && !$newPrice) {
+            return;
+        }
+
+        // Aderenti vivi del gruppo (la nuova adesione è già nel database dopo il flush).
+        $this->em->flush();
+        $members = $this->participations->findByCampaignAndStatuses($campaign, [ParticipationStatus::Prenotata, ParticipationStatus::Confermata, ParticipationStatus::Pagata, ParticipationStatus::AzioneRichiesta]);
+
+        if ($reachedMinimum) {
+            $until = $campaign->getDeadline()->format('d/m/Y');
+            foreach ($members as $member) {
+                $this->notifications->notify(
+                    $member->getUser(),
+                    NotificationType::MoqRaggiunto,
+                    'Minimo raggiunto',
+                    \sprintf('Il gruppo ha raggiunto il minimo per "%s"! Il gruppo resta aperto fino al %s: più persone aderiscono, più il prezzo può ancora scendere.', $name, $until),
+                    ReferenceType::Colletta,
+                    $campaignId,
+                );
+            }
+            $supplierUser = $campaign->getProduct()->getSupplier()->getUser();
+            if (null !== $supplierUser) {
+                $this->notifications->notify(
+                    $supplierUser,
+                    NotificationType::MoqRaggiunto,
+                    'Minimo raggiunto',
+                    \sprintf('Soglia MOQ raggiunta per "%s"! Preparati a evadere l\'ordine cumulativo.', $name),
+                    ReferenceType::Colletta,
+                    $campaignId,
+                );
+            }
+        }
+
+        if ($newPrice) {
+            $message = \sprintf('%s ora costa %s: il gruppo ha raggiunto %d unità.', $name, self::euro($tiers[$newTier]->getPriceCents()), $campaign->getCurrentQuantity());
+            foreach ($members as $member) {
+                $this->notifications->notify($member->getUser(), NotificationType::NuovoScaglione, 'Il prezzo è sceso', $message, ReferenceType::Colletta, $campaignId);
+            }
+        }
+    }
+
+    /**
+     * @return list<PriceTier>
+     */
+    private function sortedTiers(Campaign $campaign): array
+    {
+        $tiers = $campaign->getPriceTiers()->toArray();
+        usort($tiers, static fn (PriceTier $a, PriceTier $b): int => $a->getThreshold() <=> $b->getThreshold());
+
+        return $tiers;
+    }
+
+    /**
+     * Indice dello scaglione più alto raggiunto da $quantity unità (-1 se nessuno).
+     *
+     * @param list<PriceTier> $tiers
+     */
+    private function tierIndex(array $tiers, int $quantity): int
+    {
+        $index = -1;
+        foreach ($tiers as $position => $tier) {
+            if ($quantity >= $tier->getThreshold()) {
+                $index = $position;
+            }
+        }
+
+        return $index;
+    }
+
+    private static function euro(int $cents): string
+    {
+        return number_format($cents / 100, 2, ',', '.').' €';
     }
 
     /** Il gruppo ha appena raggiunto il minimo: le adesioni "prenotata" diventano "confermata". */
