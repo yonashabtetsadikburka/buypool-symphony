@@ -52,6 +52,10 @@ when@test:
         App\Participation\Service\BalanceService:
             autowire: true
             public: true
+        # lo usa il test di concorrenza (processi figli)
+        App\Participation\Service\WithdrawalService:
+            autowire: true
+            public: true
         App\Participation\Service\BalanceExpiryService:
             autowire: true
             public: true

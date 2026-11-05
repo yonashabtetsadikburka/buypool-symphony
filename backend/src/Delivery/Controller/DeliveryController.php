@@ -4,6 +4,7 @@ namespace App\Delivery\Controller;
 
 use App\Delivery\Service\DeliveryChoiceService;
 use App\Delivery\Service\DeliveryReceiptService;
+use App\Delivery\Service\DeliveryShippingService;
 use App\Delivery\Service\PickupService;
 use App\Identity\Entity\User;
 use App\Shared\Http\ApiResponse;
@@ -38,6 +39,13 @@ final class DeliveryController
     public function confirmReceipt(string $id, DeliveryReceiptService $service, #[CurrentUser] User $user): JsonResponse
     {
         return ApiResponse::ok($service->confirm($user, $id));
+    }
+
+    /** L'admin segna come spedita una consegna a domicilio (tracking facoltativo): solo dopo "Merce arrivata". */
+    #[Route('/api/admin/deliveries/{id}/ship', name: 'api_admin_delivery_ship', requirements: ['id' => Requirement::UUID], methods: ['POST'])]
+    public function ship(string $id, Request $request, DeliveryShippingService $service): JsonResponse
+    {
+        return ApiResponse::ok($service->ship($id, ApiResponse::body($request)));
     }
 
     /** Il cliente vede il suo QR (un codice nuovo a ogni visualizzazione). */
