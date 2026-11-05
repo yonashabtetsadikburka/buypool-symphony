@@ -26,11 +26,12 @@ di sessione vale per lo stesso sito.
 | Funzione | Stato |
 |---|---|
 | Registrazione, accesso, uscita | sì |
+| Accedi / Registrati con Google | sì, se `GOOGLE_CLIENT_ID` è impostato in `js/constants.js` (stesso valore di `backend/.env.local`) e in Google Cloud Console è tra le "Origini JavaScript autorizzate" `http://localhost:8080`. Il browser ottiene l'idToken da Google e lo invia a `POST /api/auth/google`. Microsoft: non ancora |
 | Elenco e dettaglio dei gruppi | sì |
 | "Unisciti al gruppo" e pagamento dell'acconto su Stripe | sì: l'adesione si crea dal webhook o dal controllo al ritorno da Stripe |
 | Pagamento del saldo (adesione confermata) | solo le chiamate (`balance-checkout`, `status`); la chiusura che conferma le adesioni è la US-11 |
 | Admin: creare, modificare, eliminare un gruppo | solo le chiamate (`POST/PATCH/DELETE /api/campaigns`); l'elenco admin e la scelta del fornitore non sono migrati |
-| Profilo, notifiche, acquisti, wallet, fornitore, proposte, recensioni, ritiro con QR, Google/Microsoft nella pagina | non ancora: rispondono 404 e la pagina mostra un errore |
+| Profilo, notifiche, acquisti, wallet, fornitore, proposte, recensioni, ritiro con QR, Microsoft nella pagina | non ancora: rispondono 404 e la pagina mostra un errore |
 
 ## Cosa cambia rispetto al legacy
 

@@ -17,6 +17,14 @@ export async function register({ nome, cognome, email, password, tipo, privacy, 
   return user;
 }
 
+/** Accesso (o primo accesso) con Google: il browser ha ottenuto l'idToken da Google, il server lo verifica. */
+export async function loginConGoogle(idToken, extra = {}) {
+  const data = await apiPost('/api/auth/google', { idToken, ...extra });
+  const user = data.dati;
+  saveSession(user, 'session_' + user.id);
+  return user;
+}
+
 export function logout() {
   // La sessione vive sul server (cookie): va chiusa anche lì. keepalive: parte anche se la pagina cambia subito.
   try {
